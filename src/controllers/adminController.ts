@@ -64,9 +64,6 @@ export const getCreatorDetails = asyncHandler(async (req: Request, res: Response
   });
 });
 
-
-
-
 export const getDashboardAnalytics = asyncHandler(async (req: Request, res: Response) => {
   const analytics = await getAdminDashboardAnalytics();
 
@@ -93,7 +90,6 @@ export const getRecentActivity = asyncHandler(async (req: Request, res: Response
     data: activity,
   });
 });
-
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;

@@ -5,12 +5,16 @@ import { LoginInput, SignupInput } from '../utils/validation';
 export const loginUser = async (data: LoginInput) => {
   // Find user in all tables
   const result = await findUserInAllTables(data.emailOrUsername, data.emailOrUsername.includes('@') ? 'email' : 'username');
-
   if (!result) {
     throw new Error('Invalid email or password');
   }
 
   const { user } = result;
+  if (user && (user.role === UserRole.CREATOR || user.role === UserRole.MEMBER) && 'isActive' in user) {
+      if (user.isActive === false) {
+          throw new Error("Your account is suspended");
+      }
+  }
 
   // Check password
   const isPasswordValid = await comparePassword(data.password, user.password);

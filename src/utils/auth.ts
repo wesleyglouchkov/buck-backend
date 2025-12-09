@@ -37,17 +37,6 @@ export const verifyToken = async (token: string) => {
   if (!decoded) {
     throw new Error('Invalid token');
   }
-
-  // Map NextAuth JWT to our UserPayload structure if needed, or just return it.
-  // Assuming the NextAuth token contains the user object or we treat the whole token as the user payload.
-  // For compatibility with existing code which expects { user: ... }, we might need to adjust.
-  // However, usually NextAuth token *is* the user object (flat).
-  // Existing code does: req.user = decoded.user.
-  // So we should return an object that has a 'user' property, or change middleware.
-  // Let's change this to return the decoded token as 'user' for now, but wrapper might be needed.
-
-  // Actually, let's look at how middleware uses it: 'req.user = decoded.user'.
-  // If NextAuth token is flat, we should return { user: decoded }.
   return { user: decoded } as unknown as JWTPayload;
 };
 
@@ -143,8 +132,9 @@ export const findUserInAllTables = async (identifier: string, type: 'email' | 'u
 
   // Check in Creator table
   const creator = await db.creators.findUnique({
-    where: whereClause,
+    where: {...whereClause},
   });
+  console.log(creator)
   if (creator) return { user: creator, role: UserRole.CREATOR };
 
   // Check in Member table
