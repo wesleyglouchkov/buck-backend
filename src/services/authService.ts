@@ -1,6 +1,7 @@
 import { UserRole } from '@prisma/client';
 import { findUserInAllTables, createUserInTable, comparePassword } from '../utils/auth';
 import { LoginInput, SignupInput } from '../utils/validation';
+import { sendWelcomeEmail } from './emailService';
 
 export const loginUser = async (data: LoginInput) => {
   // Find user in all tables
@@ -34,7 +35,7 @@ export const loginUser = async (data: LoginInput) => {
   };
 };
 
-export const signupUser = async (data: SignupInput) => {
+export const signupUser = async ( data: SignupInput) => {
   // Check if user already exists
   const existingUser = await findUserInAllTables(data.email, 'email');
   if (existingUser) {
@@ -58,6 +59,11 @@ export const signupUser = async (data: SignupInput) => {
     avatar: data.avatar,
   });
 
+  try {
+    await sendWelcomeEmail(data.email, data.name);
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+  }
   // Frontend handles token generation
   return {
     user: {
