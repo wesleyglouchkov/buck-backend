@@ -8,7 +8,8 @@ import {
   toggleStatus,
   changeUserStatus,
   getDashboard,
-  getCreatorDetails
+  getCreatorDetails, 
+  incrementUserWarnings
 } from '../controllers/adminController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -24,6 +25,8 @@ router.get('/get-creater-profile/:id', getCreatorDetails);
 router.get('/analytics', getDashboardAnalytics);
 router.get('/chart-data', getDashboardChartData);
 router.get('/recent-activity', getRecentActivity);
+router.patch('/increment-warnings/:userId', incrementUserWarnings);
+
 
 // User management routes
 router.get('/users', getUsers);

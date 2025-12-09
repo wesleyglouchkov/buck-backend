@@ -11,7 +11,8 @@ import {
   changeAnyUserStatus,
   getDashboardStats,
   getTopCreators,
-  getCreatorProfile
+  getCreatorProfile,
+  incrementUserWarningsService
 } from '../services/adminService';
 
 
@@ -154,4 +155,27 @@ export const changeUserStatus = asyncHandler(async (req: Request, res: Response)
   });
 });
 
+// In adminController.ts
+export const incrementUserWarnings = asyncHandler(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { userType } = req.body;
+
+  if (!userId || !userType) {
+    throw new Error('User ID and type are required');
+  }
+
+  if (userType !== 'creator' && userType !== 'member') {
+    throw new Error('Invalid user type. Must be "creator" or "member"');
+  }
+
+  const updatedUser = await incrementUserWarningsService(userId, userType);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      id: updatedUser.id,
+      isWarnedTimes: updatedUser.isWarnedTimes,
+    },
+  });
+});
  

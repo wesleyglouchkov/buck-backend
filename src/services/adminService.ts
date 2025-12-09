@@ -261,3 +261,24 @@ export const getCreatorProfile = async (creatorId: string) => {
     }
   };
 };
+
+
+export const incrementUserWarningsService = async (userId: string, userType: 'creator' | 'member') => {
+  if (userType === 'creator') {
+    const user = await db.creators.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('Creator not found');
+    
+    return await db.creators.update({
+      where: { id: userId },
+      data: { isWarnedTimes: { increment: 1 } },
+    });
+  } else {
+    const user = await db.members.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('Member not found');
+    
+    return await db.members.update({
+      where: { id: userId },
+      data: { isWarnedTimes: { increment: 1 } },
+    });
+  }
+};
