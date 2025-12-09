@@ -2,6 +2,7 @@
 import { Resend } from 'resend';
 import { ResetPasswordEmail } from '../emails/ResetPasswordEmail';
 import { AccountWarningEmail } from '../emails/AccountWarningEmail';
+import { AccountSuspensionEmail } from '../emails/AccountSuspensionEmail';
 import React from 'react';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -54,6 +55,29 @@ export const sendAccountWarningEmail = async (email: string, username: string, w
         return data;
     } catch (error) {
         console.error('Error sending warning email:', error);
+        throw error;
+    }
+};
+
+export const sendAccountSuspensionEmail = async (email: string, username: string) => {
+    if (!process.env.RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is missing');
+        return;
+    }
+
+    try {
+        const data = await resend.emails.send({
+            from: 'Buck <onboarding@resend.dev>',
+            to: email,
+            subject: 'Account Suspension',
+            react: React.createElement(AccountSuspensionEmail, {
+                username,
+            }),
+        });
+
+        return data;
+    } catch (error) {
+        console.error('Error sending suspension email:', error);
         throw error;
     }
 };

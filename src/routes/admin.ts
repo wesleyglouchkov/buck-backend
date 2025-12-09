@@ -4,7 +4,6 @@ import {
   getRecentActivity,
   getUsers,
   removeUser,
-  toggleStatus,
   changeUserStatus,
   getDashboard,
   getCreatorDetails, 
@@ -30,6 +29,5 @@ router.patch('/increment-warnings/:userId', incrementUserWarnings);
 router.get('/users', getUsers);
 router.patch('/user/:userId', changeUserStatus)
 router.delete('/users/:userType/:userId', removeUser);
-router.patch('/users/:userType/:userId/toggle-status', toggleStatus);
 
 export default router;

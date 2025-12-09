@@ -1,5 +1,5 @@
 import { db } from '../utils/database';
-import { sendAccountWarningEmail } from './emailService';
+import { sendAccountWarningEmail, sendAccountSuspensionEmail } from './emailService';
 
 export const getAdminDashboardAnalytics = async () => {
   // Get analytics data for admin dashboard
@@ -162,6 +162,16 @@ export const changeAnyUserStatus = async (userId: string) => {
 
   if (!user) {
     throw new Error('User not found');
+  }
+
+  const newIsActive = !user.isActive;
+
+  if (newIsActive === false) {
+    try {
+      await sendAccountSuspensionEmail(user.email, user.username || 'User');
+    } catch (error) {
+      console.error('Failed to send suspension email:', error);
+    }
   }
 
   if (type === 'creator') {

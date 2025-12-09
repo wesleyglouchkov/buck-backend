@@ -116,25 +116,6 @@ export const removeUser = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const toggleStatus = asyncHandler(async (req: Request, res: Response) => {
-  const { userId, userType } = req.params;
-
-  if (!['creator', 'member'].includes(userType)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid user type for status toggle',
-    });
-  }
-
-  const updatedUser = await toggleUserStatus(userId, userType as 'creator' | 'member');
-
-  res.status(200).json({
-    success: true,
-    message: 'User status updated successfully',
-    data: updatedUser,
-  });
-});
-
 export const changeUserStatus = asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
 
@@ -146,7 +127,6 @@ export const changeUserStatus = asyncHandler(async (req: Request, res: Response)
     data: updatedUser,
   });
 });
-
 
 // Send warning email and increment count
 export const incrementUserWarnings = asyncHandler(async (req: Request, res: Response) => {
