@@ -1,4 +1,5 @@
 import { db } from '../utils/database';
+import { sendAccountWarningEmail } from './emailService';
 
 export const getAdminDashboardAnalytics = async () => {
   // Get analytics data for admin dashboard
@@ -263,22 +264,58 @@ export const getCreatorProfile = async (creatorId: string) => {
 };
 
 
-export const incrementUserWarningsService = async (userId: string, userType: 'creator' | 'member') => {
+interface UserWithWarnings {
+  id: string;
+  isWarnedTimes: number;
+  email: string;
+  username: string | null;
+}
+
+export const incrementUserWarningsService = async ( userId: string,  userType: 'creator' | 'member',  warningMessage: string = 'Violation of community guidelines'): Promise<UserWithWarnings> => {
+  let user: UserWithWarnings | null = null;
+  let updatedUser: UserWithWarnings;
+
   if (userType === 'creator') {
-    const user = await db.creators.findUnique({ where: { id: userId } });
+    user = await db.creators.findUnique({ 
+      where: { id: userId },
+      select: { id: true, isWarnedTimes: true, email: true, username: true }
+    }) as UserWithWarnings | null;
+    
     if (!user) throw new Error('Creator not found');
     
-    return await db.creators.update({
+    updatedUser = await db.creators.update({
       where: { id: userId },
       data: { isWarnedTimes: { increment: 1 } },
-    });
-  } else {
-    const user = await db.members.findUnique({ where: { id: userId } });
+      select: { id: true, isWarnedTimes: true, email: true, username: true }
+    }) as UserWithWarnings;
+  } 
+  
+  else {
+    user = await db.members.findUnique({ 
+      where: { id: userId },
+      select: { id: true, isWarnedTimes: true, email: true, username: true }
+    }) as UserWithWarnings | null;
+    
     if (!user) throw new Error('Member not found');
     
-    return await db.members.update({
+    updatedUser = await db.members.update({
       where: { id: userId },
       data: { isWarnedTimes: { increment: 1 } },
-    });
+      select: { id: true, isWarnedTimes: true, email: true, username: true }
+    }) as UserWithWarnings;
   }
+
+  // Send warning email
+  try {
+    await sendAccountWarningEmail(
+      updatedUser.email,
+      updatedUser.username || 'User',
+      warningMessage,
+      updatedUser.isWarnedTimes,
+    );
+  } catch (error) {
+    console.error('Failed to send warning email:', error);
+  }
+
+  return updatedUser;
 };

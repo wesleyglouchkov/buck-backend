@@ -155,10 +155,11 @@ export const changeUserStatus = asyncHandler(async (req: Request, res: Response)
   });
 });
 
-// In adminController.ts
+
+// Send warning email and increment count
 export const incrementUserWarnings = asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { userType } = req.body;
+  const { userType, warningMessage } = req.body;
 
   if (!userId || !userType) {
     throw new Error('User ID and type are required');
@@ -168,7 +169,11 @@ export const incrementUserWarnings = asyncHandler(async (req: Request, res: Resp
     throw new Error('Invalid user type. Must be "creator" or "member"');
   }
 
-  const updatedUser = await incrementUserWarningsService(userId, userType);
+  const updatedUser = await incrementUserWarningsService(
+    userId, 
+    userType, 
+    warningMessage || 'A warning has been issued on your account'
+  );
 
   res.status(200).json({
     success: true,

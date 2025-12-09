@@ -1,6 +1,7 @@
 
 import { Resend } from 'resend';
 import { ResetPasswordEmail } from '../emails/ResetPasswordEmail';
+import { AccountWarningEmail } from '../emails/AccountWarningEmail';
 import React from 'react';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -16,7 +17,7 @@ export const sendResetPasswordEmail = async (email: string, name: string, token:
 
     try {
         const data = await resend.emails.send({
-            from: 'BuckV1 <onboarding@resend.dev>', // Use resend.dev for testing unless domain is verified
+            from: 'Buck <onboarding@resend.dev>', // Use resend.dev for testing unless domain is verified
             to: 'tchetan308@gmail.com',
             subject: 'Reset your password',
             react: React.createElement(ResetPasswordEmail, {
@@ -31,3 +32,30 @@ export const sendResetPasswordEmail = async (email: string, name: string, token:
         throw error;
     }
 };
+
+export const sendAccountWarningEmail = async (email: string, username: string, warningMessage: string, warningCount: number) => {
+    if (!process.env.RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is missing');
+        return;
+    }
+
+    try {
+        const data = await resend.emails.send({
+            from: 'Buck <onboarding@resend.dev>',
+            to: email,
+            subject: `Account Warning (${warningCount})`,
+            react: React.createElement(AccountWarningEmail, {
+                username,
+                warningMessage,
+                warningCount,
+            }),
+        });
+
+        return data;
+    } catch (error) {
+        console.error('Error sending warning email:', error);
+        throw error;
+    }
+};
+
+
