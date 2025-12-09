@@ -74,14 +74,6 @@ export const getDashboardAnalytics = asyncHandler(async (req: Request, res: Resp
   });
 });
 
-export const getDashboardChartData = asyncHandler(async (req: Request, res: Response) => {
-  const chartData = await getAdminDashboardChartData();
-
-  res.status(200).json({
-    success: true,
-    data: chartData,
-  });
-});
 
 export const getRecentActivity = asyncHandler(async (req: Request, res: Response) => {
   const activity = await getAdminRecentActivity();
