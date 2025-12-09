@@ -38,6 +38,6 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# Prisma
-prisma/migrations/
-!prisma/migrations/.gitkeep
+# # Prisma
+# prisma/migrations/
+# !prisma/migrations/.gitkeep
