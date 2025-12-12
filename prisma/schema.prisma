@@ -51,6 +51,15 @@ model User {
   // Relations for Member
   subscriptions Subscription[]
 
+  // Stripe fields
+  stripe_account_id         String?
+  stripe_connected          Boolean  @default(false)
+  stripe_onboarding_completed Boolean @default(false)
+
+  // Tip relations
+  tipCreatorTransactions TipTransaction[] @relation("TipCreator")
+  tipMemberTransactions  TipTransaction[] @relation("TipMember")
+
   @@map("users")
 }
 
@@ -107,4 +116,27 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+model TipTransaction {
+  id                     String   @id @default(cuid())
+  session_id             String   @unique
+  creator_id             String
+  member_id              String
+  livestream_id          String?
+  buck_amount            Decimal  @db.Decimal(10, 2)
+  amount_cents           Int
+  platform_fee_cents     Int
+  creator_receives_cents Int
+  status                 String   @default("pending")
+  stripe_payment_intent_id String?
+  created_at             DateTime @default(now())
+  completed_at           DateTime?
+  metadata               Json?
+
+  // Relations
+  creator User @relation("TipCreator", fields: [creator_id], references: [id], onDelete: Cascade)
+  member  User @relation("TipMember", fields: [member_id], references: [id], onDelete: Cascade)
+
+  @@map("tip_transactions")
 }

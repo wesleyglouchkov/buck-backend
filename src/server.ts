@@ -10,6 +10,8 @@ import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import userRoutes from './routes/user';
+import { creatorRoutes, backendRoutes as stripeBackendRoutes } from './routes/creator';
+import memberRoutes from './routes/member';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -62,10 +64,36 @@ app.get('/health', (req: express.Request, res: express.Response) => {
   });
 });
 
-// API routes
+// Auth routes
 app.use('/api/auth', authRoutes);
+
+// Admin routes
 app.use('/api/admin', adminRoutes);
+
+// Common routes for creators and members
 app.use('/api/users', userRoutes);
+
+// Creator specific routes
+app.use('/api/creator', creatorRoutes);
+
+// Member specific routes
+app.use('/api/member', memberRoutes);
+
+// Stripe webhook needs raw body
+app.use('/api/backend', (req, res, next) => {
+  if (req.path === '/stripe/webhook') {
+    express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
+app.use('/api/backend',stripeBackendRoutes);
+
+
+
+
+
+
 
 // 404 handler
 app.use('*', (req: express.Request, res: express.Response) => {
