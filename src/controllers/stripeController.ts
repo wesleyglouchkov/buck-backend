@@ -3,6 +3,8 @@ import Stripe from 'stripe';
 import { logger } from '../utils/logger';
 import { db } from '../utils/database';
 import { stripe, FRONTEND_URL, STRIPE_WEBHOOK_SECRET } from '../lib/stripe';
+import { configDotenv } from 'dotenv';
+configDotenv()
 
 export const createConnectAccountLink = async (req: Request, res: Response) => {
   try {

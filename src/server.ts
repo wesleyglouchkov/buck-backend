@@ -43,6 +43,9 @@ app.use(cors({
   optionsSuccessStatus: 200,
 }));
 
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -80,7 +83,6 @@ app.use('/api/creator', creatorRoutes);
 // Member specific routes
 app.use('/api/member', memberRoutes);
 
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 
 
