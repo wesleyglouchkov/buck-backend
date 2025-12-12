@@ -55,7 +55,6 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
       return_url: `${FRONTEND_URL}/creator/profile?stripe_connected=true`,
       type: 'account_onboarding',
     });
-
     return res.json({ success: true, url: accountLink.url, accountId });
   } catch (error: any) {
     logger.error('createConnectAccountLink error', error);
@@ -218,6 +217,7 @@ export const createTipPayment = async (req: Request, res: Response) => {
 
 // Webhook to handle Stripe events
 export const stripeWebhook = async (req: Request, res: Response) => {
+    console.log("💫 Received webhook", req.headers);
   try {
     const signature = req.headers['stripe-signature'];
     if (!signature) return res.status(400).send('Missing stripe-signature');
