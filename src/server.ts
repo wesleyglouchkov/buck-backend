@@ -16,6 +16,7 @@ import memberRoutes from './routes/member';
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
+import { stripeWebhook } from './controllers/stripeController';
 
 dotenv.config();
 
@@ -79,6 +80,7 @@ app.use('/api/creator', creatorRoutes);
 // Member specific routes
 app.use('/api/member', memberRoutes);
 
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 
 
