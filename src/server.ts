@@ -9,8 +9,7 @@ import rateLimit from 'express-rate-limit';
 // Import routes
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
-import creatorRoutes from './routes/creator';
-import memberRoutes from './routes/member';
+import userRoutes from './routes/user';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -66,8 +65,7 @@ app.get('/health', (req: express.Request, res: express.Response) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/creator', creatorRoutes);
-app.use('/api/member', memberRoutes);
+app.use('/api/users', userRoutes);
 
 // 404 handler
 app.use('*', (req: express.Request, res: express.Response) => {

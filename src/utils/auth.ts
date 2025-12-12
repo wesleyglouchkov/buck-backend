@@ -93,19 +93,10 @@ export const resetUserPassword = async (email: string, newPassword: string) => {
     });
   }
 
-  // Update in Creator
-  const creator = await db.creators.findUnique({ where: { email } });
-  if (creator) {
-    await db.creators.update({
-      where: { email },
-      data: { password: hashedPassword },
-    });
-  }
-
-  // Update in Member
-  const member = await db.members.findUnique({ where: { email } });
-  if (member) {
-    await db.members.update({
+  // Update in User table for Creators and Members
+  const user = await db.user.findUnique({ where: { email } });
+  if (user) {
+    await db.user.update({
       where: { email },
       data: { password: hashedPassword },
     });
@@ -130,18 +121,11 @@ export const findUserInAllTables = async (identifier: string, type: 'email' | 'u
   });
   if (admin) return { user: admin, role: UserRole.ADMIN };
 
-  // Check in Creator table
-  const creator = await db.creators.findUnique({
-    where: {...whereClause},
-  });
-  console.log(creator)
-  if (creator) return { user: creator, role: UserRole.CREATOR };
-
-  // Check in Member table
-  const member = await db.members.findUnique({
+  // Check in User table for Creators and Members
+  const user = await db.user.findUnique({
     where: whereClause,
   });
-  if (member) return { user: member, role: UserRole.MEMBER };
+  if (user) return { user, role: user.role };
 
   return null;
 };
@@ -170,24 +154,15 @@ export const createUserInTable = async (userData: {
       });
 
     case UserRole.CREATOR:
-      return db.creators.create({
-        data: {
-          name: userData.name,
-          username: userData.username,
-          email: userData.email,
-          password: hashedPassword,
-          bio: userData.bio,
-          avatar: userData.avatar,
-        },
-      });
-
     case UserRole.MEMBER:
-      return db.members.create({
+      return db.user.create({
         data: {
           name: userData.name,
           username: userData.username,
           email: userData.email,
           password: hashedPassword,
+          role: userData.role,
+          bio: userData.bio,
           avatar: userData.avatar,
         },
       });

@@ -30,44 +30,28 @@ model Admin {
   @@map("admins")
 }
 
-model Creators {
-  id        String   @id @default(cuid())
-  name      String
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      UserRole @default(CREATOR)
-  bio       String?
-  avatar    String?
-  isActive  Boolean  @default(true)
-  isWarnedTimes Int @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  username      String    @unique
+  email         String    @unique
+  password      String
+  role          UserRole
+  bio           String?
+  avatar        String?
+  isActive      Boolean   @default(true)
+  isWarnedTimes Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  // Relations
-  content   Content[]
-  analytics Analytics[]
+  // Relations for Creator
+  content       Content[]
+  analytics     Analytics[]
 
-  @@map("creators")
-}
-
-model Members {
-  id        String   @id @default(cuid())
-  name      String
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      UserRole @default(MEMBER)
-  avatar    String?
-  isWarnedTimes Int @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
+  // Relations for Member
   subscriptions Subscription[]
 
-  @@map("members")
+  @@map("users")
 }
 
 model Content {
@@ -81,7 +65,7 @@ model Content {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  creator     Creators @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator     User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId   String
 
   @@map("content")
@@ -97,7 +81,7 @@ model Analytics {
   updatedAt DateTime @updatedAt
 
   // Relations
-  creator   Creators @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator   User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId String
 
   @@map("analytics")
@@ -109,7 +93,7 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   // Relations
-  member    Members @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member    User @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId  String
 
   @@map("subscriptions")

@@ -11,10 +11,10 @@ export const loginUser = async (data: LoginInput) => {
   }
 
   const { user } = result;
-  if (user && (user.role === UserRole.CREATOR || user.role === UserRole.MEMBER) && 'isActive' in user) {
-      if (user.isActive === false) {
-          throw new Error("Your account is suspended");
-      }
+  if (user && (user.role === UserRole.CREATOR || user.role === UserRole.MEMBER)) {
+    if ('isActive' in user && user.isActive === false) {
+      throw new Error('Your account is suspended');
+    }
   }
 
   // Check password

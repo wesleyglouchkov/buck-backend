@@ -122,15 +122,15 @@ export const getContent = async (creatorId: string, contentId?: string) => {
 };
 
 export const updateCreatorProfile = async (creatorId: string, data: UpdateProfileInput) => {
-  return await db.creators.update({
-    where: { id: creatorId },
+  return await db.user.update({
+    where: { id: creatorId, role: 'CREATOR' },
     data,
   });
 };
 
 export const getCreatorProfile = async (creatorId: string) => {
-  return await db.creators.findUnique({
-    where: { id: creatorId },
+  return await db.user.findUnique({
+    where: { id: creatorId, role: 'CREATOR' },
     select: {
       id: true,
       name: true,

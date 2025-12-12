@@ -2,8 +2,8 @@ import { db } from '../utils/database';
 import { UpdateProfileInput } from '../utils/validation';
 
 export const getMemberDashboardData = async (memberId: string) => {
-  const member = await db.members.findUnique({
-    where: { id: memberId },
+  const member = await db.user.findUnique({
+    where: { id: memberId, role: 'MEMBER' },
     include: {
       subscriptions: true,
     },
@@ -44,8 +44,8 @@ export const getMemberSubscriptions = async (memberId: string) => {
 
 export const subscribeToCreator = async (memberId: string, creatorId: string) => {
   // Check if creator exists
-  const creator = await db.creators.findUnique({
-    where: { id: creatorId },
+  const creator = await db.user.findUnique({
+    where: { id: creatorId, role: 'CREATOR' },
   });
 
   if (!creator) {
@@ -90,15 +90,15 @@ export const unsubscribeFromCreator = async (memberId: string, subscriptionId: s
 };
 
 export const updateMemberProfile = async (memberId: string, data: UpdateProfileInput) => {
-  return await db.members.update({
-    where: { id: memberId },
+  return await db.user.update({
+    where: { id: memberId, role: 'MEMBER' },
     data,
   });
 };
 
 export const getMemberProfile = async (memberId: string) => {
-  return await db.members.findUnique({
-    where: { id: memberId },
+  return await db.user.findUnique({
+    where: { id: memberId, role: 'MEMBER' },
     select: {
       id: true,
       name: true,
@@ -135,4 +135,23 @@ export const getMemberRecommendations = async (memberId: string) => {
   });
 
   return popularContent;
+};
+
+export const changeUserRole = async (userId: string) => {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (user.role === 'CREATOR') {
+    throw new Error('User is already a creator');
+  }
+
+  return await db.user.update({
+    where: { id: userId },
+    data: { role: 'CREATOR' },
+  });
 };

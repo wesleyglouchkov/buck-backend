@@ -3,9 +3,9 @@ import { sendAccountWarningEmail, sendAccountSuspensionEmail } from './emailServ
 
 export const getAdminDashboardAnalytics = async () => {
   // Get analytics data for admin dashboard
-  const totalUsers = await db.members.count() + await db.creators.count()
-  const activeCreators = await db.creators.count({
-    where: { isActive: true }
+  const totalUsers = await db.user.count();
+  const activeCreators = await db.user.count({
+    where: { isActive: true, role: 'CREATOR' }
   });
   const totalContent = await db.content.count();
 
@@ -32,8 +32,9 @@ export const getAdminDashboardChartData = async () => {
 
     const dayName = days[date.getDay()];
 
-    const creatorsCount = await db.creators.count({
+    const creatorsCount = await db.user.count({
       where: {
+        role: 'CREATOR',
         createdAt: {
           gte: date,
           lt: nextDate
@@ -41,8 +42,9 @@ export const getAdminDashboardChartData = async () => {
       }
     });
 
-    const membersCount = await db.members.count({
+    const membersCount = await db.user.count({
       where: {
+        role: 'MEMBER',
         createdAt: {
           gte: date,
           lt: nextDate
@@ -62,10 +64,10 @@ export const getAdminDashboardChartData = async () => {
 
 export const getAdminRecentActivity = async () => {
   // Get recent activity (user registrations, content creation, etc.)
-  const recentUsers = await db.members.findMany({
+  const recentUsers = await db.user.findMany({
     take: 5,
     orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, email: true, createdAt: true },
+    select: { id: true, name: true, email: true, createdAt: true, role: true },
   });
 
   const recentContent = await db.content.findMany({
@@ -91,31 +93,18 @@ export const getAllUsers = async (query: { page: number, limit: number, type: 'c
     ]
   } : {};
 
-  if (type === 'creator') {
-    return await db.creators.findMany({
-      where: {
-        ...whereClause,
-        isActive
-      },
-      select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, isActive: true },
-      skip: offset,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    });
-  }
-
-  if (type === 'member') {
-    return await db.members.findMany({
-      where: {
-        ...whereClause,
-        isActive
-      },
-      select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, isActive: true },
-      skip: offset,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    });
-  }
+  const roleType = type.toUpperCase() as 'CREATOR' | 'MEMBER';
+  return await db.user.findMany({
+    where: {
+      ...whereClause,
+      role: roleType,
+      isActive
+    },
+    select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, isActive: true },
+    skip: offset,
+    take: limit,
+    orderBy: { createdAt: 'desc' }
+  });
 
   return [];
 };
@@ -125,40 +114,28 @@ export const deleteUser = async (userId: string, userType: 'admin' | 'creator' |
     case 'admin':
       return await db.admin.delete({ where: { id: userId } });
     case 'creator':
-      return await db.creators.delete({ where: { id: userId } });
     case 'member':
-      return await db.members.delete({ where: { id: userId } });
+      return await db.user.delete({ where: { id: userId } });
     default:
       throw new Error('Invalid user type');
   }
 };
 
 export const toggleUserStatus = async (userId: string, userType: 'creator' | 'member') => {
-  const user = userType === 'creator'
-    ? await db.creators.findUnique({ where: { id: userId } })
-    : await db.members.findUnique({ where: { id: userId } });
+  const user = await db.user.findUnique({ where: { id: userId } });
 
   if (!user) {
     throw new Error('User not found');
   }
 
-  return userType === 'creator' ? await db.creators.update({
-    where: { id: userId },
-    data: { isActive: !user.isActive },
-  }) : await db.members.update({
+  return await db.user.update({
     where: { id: userId },
     data: { isActive: !user.isActive },
   });
 };
 
 export const changeAnyUserStatus = async (userId: string) => {
-  let user: any = await db.creators.findUnique({ where: { id: userId } });
-  let type = 'creator';
-
-  if (!user) {
-    user = await db.members.findUnique({ where: { id: userId } });
-    type = 'member';
-  }
+  const user = await db.user.findUnique({ where: { id: userId } });
 
   if (!user) {
     throw new Error('User not found');
@@ -174,40 +151,31 @@ export const changeAnyUserStatus = async (userId: string) => {
     }
   }
 
-  if (type === 'creator') {
-    return await db.creators.update({
-      where: { id: userId },
-      data: { isActive: !user.isActive },
-    });
-  } else {
-    // This assertion is safe because we checked if user exists and if it wasn't creator, it must be member
-    const member = user as any;
-    return await db.members.update({
-      where: { id: userId },
-      data: { isActive: !member.isActive },
-    });
-  }
+  return await db.user.update({
+    where: { id: userId },
+    data: { isActive: !user.isActive },
+  });
 };
 
 export const getDashboardStats = async () => {
   // 1. Basic Counts
-  const totalUsers = await db.members.count() + await db.creators.count();
-  const activeCreators = await db.creators.count({ where: { isActive: true } });
+  const totalUsers = await db.user.count();
+  const activeCreators = await db.user.count({ where: { isActive: true, role: 'CREATOR' } });
   const totalContent = await db.content.count();
 
   // 2. Recent Signups (Members only for now as per "new users")
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const newUsersCount = await db.members.count({
+  const newUsersCount = await db.user.count({
     where: { createdAt: { gte: sevenDaysAgo } }
   });
 
-  const recentUsers = await db.members.findMany({
+  const recentUsers = await db.user.findMany({
     take: 5,
     where: { createdAt: { gte: sevenDaysAgo } },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, createdAt: true }
+    select: { id: true, name: true, createdAt: true, role: true }
   });
 
   // 3. Financials (Mocked)
@@ -232,10 +200,10 @@ export const getDashboardStats = async () => {
 export const getTopCreators = async () => {
   // TODO: These thing needs to calculate based on the total views and total revenue
   // For now, just fetch 5 creators and mock the rest
-  const creators = await db.creators.findMany({
+  const creators = await db.user.findMany({
     take: 5,
+    where: { isActive: true, role: 'CREATOR' },
     select: { id: true, name: true, username: true },
-    where: { isActive: true } // Assuming only active ones
   });
 
   return creators.map((c, index) => ({
@@ -248,8 +216,8 @@ export const getTopCreators = async () => {
 
 export const getCreatorProfile = async (creatorId: string) => {
   //TODO: the other info about the creator has to be added later 
-  const creator = await db.creators.findUnique({
-    where: { id: creatorId },
+  const creator = await db.user.findUnique({
+    where: { id: creatorId, role: 'CREATOR' },
     include: {
       _count: {
         select: { content: true }
@@ -282,38 +250,22 @@ interface UserWithWarnings {
 }
 
 export const incrementUserWarningsService = async ( userId: string,  userType: 'creator' | 'member',  warningMessage: string = 'Violation of community guidelines'): Promise<UserWithWarnings> => {
-  let user: UserWithWarnings | null = null;
   let updatedUser: UserWithWarnings;
 
-  if (userType === 'creator') {
-    user = await db.creators.findUnique({ 
-      where: { id: userId },
-      select: { id: true, isWarnedTimes: true, email: true, username: true }
-    }) as UserWithWarnings | null;
-    
-    if (!user) throw new Error('Creator not found');
-    
-    updatedUser = await db.creators.update({
-      where: { id: userId },
-      data: { isWarnedTimes: { increment: 1 } },
-      select: { id: true, isWarnedTimes: true, email: true, username: true }
-    }) as UserWithWarnings;
-  } 
-  
-  else {
-    user = await db.members.findUnique({ 
-      where: { id: userId },
-      select: { id: true, isWarnedTimes: true, email: true, username: true }
-    }) as UserWithWarnings | null;
-    
-    if (!user) throw new Error('Member not found');
-    
-    updatedUser = await db.members.update({
-      where: { id: userId },
-      data: { isWarnedTimes: { increment: 1 } },
-      select: { id: true, isWarnedTimes: true, email: true, username: true }
-    }) as UserWithWarnings;
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, isWarnedTimes: true, email: true, username: true, role: true }
+  });
+
+  if (!user || (user.role !== 'CREATOR' && user.role !== 'MEMBER')) {
+    throw new Error('User not found or not a creator/member');
   }
+
+  updatedUser = await db.user.update({
+    where: { id: userId },
+    data: { isWarnedTimes: { increment: 1 } },
+    select: { id: true, isWarnedTimes: true, email: true, username: true }
+  }) as UserWithWarnings;
 
   // Send warning email
   try {
