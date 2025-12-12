@@ -219,14 +219,14 @@ export const createTipPayment = async (req: Request, res: Response) => {
 // Webhook to handle Stripe events
 export const stripeWebhook = async (req: Request, res: Response) => {
   try {
-    const sig = req.headers['stripe-signature'];
-    if (!sig) return res.status(400).send('Missing stripe-signature');
+    const signature = req.headers['stripe-signature'];
+    if (!signature) return res.status(400).send('Missing stripe-signature');
 
     if (!STRIPE_WEBHOOK_SECRET) return res.status(500).send('Webhook secret not configured');
 
     let event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig as string, STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(req.body, signature as string, STRIPE_WEBHOOK_SECRET);
     } catch (err: any) {
       logger.error('Webhook signature verification failed', err);
       return res.status(400).send(`Webhook Error: ${err.message}`);
