@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-
+import bodyParser from 'body-parser'
 // Import routes
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
@@ -43,6 +43,13 @@ app.use(cors({
   optionsSuccessStatus: 200,
 }));
 
+app.use(bodyParser.json({
+    verify: (req: any, res, buf) => {
+      req.rawBody = buf.toString();
+    }
+  }));
+
+  
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 
