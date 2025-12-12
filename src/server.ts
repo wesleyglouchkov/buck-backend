@@ -10,7 +10,7 @@ import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import userRoutes from './routes/user';
-import { creatorRoutes, backendRoutes as stripeBackendRoutes } from './routes/creator';
+import { creatorRoutes } from './routes/creator';
 import memberRoutes from './routes/member';
 
 // Import middleware
@@ -73,22 +73,11 @@ app.use('/api/admin', adminRoutes);
 // Common routes for creators and members
 app.use('/api/users', userRoutes);
 
-// Creator specific routes
+// Creator specific routes (now includes webhook with raw body)
 app.use('/api/creator', creatorRoutes);
 
 // Member specific routes
 app.use('/api/member', memberRoutes);
-
-// Stripe webhook needs raw body
-app.use('/api/backend', (req, res, next) => {
-  if (req.path === '/stripe/webhook') {
-    express.raw({ type: 'application/json' })(req, res, next);
-  } else {
-    express.json({ limit: '10mb' })(req, res, next);
-  }
-});
-app.use('/api/backend',stripeBackendRoutes);
-
 
 
 
