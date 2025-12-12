@@ -132,7 +132,9 @@ export const getProfile = asyncHandler(async (req: AuthenticatedRequest, res: Re
 });
 
 export const changeRole = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user!.id;
+  const userId = req.body.userId;
   const updatedUser = await changeUserRole(userId);
-  res.status(200).json({ success: true, message: 'Role updated successfully', data: updatedUser });
+  res.status(200).json({ success: true, message: 'Role updated successfully',
+     data: updatedUser 
+    });
 });
