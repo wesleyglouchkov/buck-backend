@@ -21,11 +21,13 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
+router.post('/help-request', sendHelpRequestAsEmailToAdmin);
+
 // Shared routes
 router.use(authenticate);
 router.route('/profile').get(getProfile).put(updateProfile);
 router.post('/change-role', changeRole);
-router.post('/help-request', sendHelpRequestAsEmailToAdmin);
+
 // Creator routes
 const creatorRouter = Router();
 creatorRouter.use(authorize('CREATOR'));
