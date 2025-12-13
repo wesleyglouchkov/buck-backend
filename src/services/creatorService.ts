@@ -2,18 +2,18 @@ import { db } from '../utils/database';
 import { CreateContentInput, UpdateContentInput, UpdateProfileInput } from '../utils/validation';
 
 export const getCreatorDashboardAnalytics = async (creatorId: string) => {
-  const totalContent = await db.content.count({
+  const totalContent = await db.stream.count({
     where: { creatorId }
   });
 
-  const publishedContent = await db.content.count({
-    where: { creatorId, isPublished: true }
+  const publishedContent = await db.stream.count({
+    where: { creatorId }
   });
 
   // Get analytics data
-  const analytics = await db.analytics.findMany({
+  const analytics = await db.stream.findMany({
     where: { creatorId },
-    orderBy: { date: 'desc' },
+    orderBy: { createdAt: 'desc' },
     take: 30,
   });
 
@@ -34,9 +34,9 @@ export const getCreatorDashboardAnalytics = async (creatorId: string) => {
 };
 
 export const getCreatorDashboardChartData = async (creatorId: string) => {
-  const analytics = await db.analytics.findMany({
+  const analytics = await db.stream.findMany({
     where: { creatorId },
-    orderBy: { date: 'desc' },
+    orderBy: { createdAt: 'desc' },
     take: 7,
   });
 
@@ -44,42 +44,21 @@ export const getCreatorDashboardChartData = async (creatorId: string) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   return days.map((day, index) => ({
     name: day,
-    value: analytics[index]?.views || 0,
+    // value: analytics[index]?.views || 0,
   }));
 };
 
 export const getCreatorRecentContent = async (creatorId: string) => {
-  return await db.content.findMany({
-    where: { creatorId },
-    orderBy: { createdAt: 'desc' },
-    take: 10,
-  });
+  
 };
 
 export const createContent = async (creatorId: string, data: CreateContentInput) => {
-  const content = await db.content.create({
-    data: {
-      ...data,
-      creatorId,
-    },
-  });
-
-  // Create initial analytics entry
-  await db.analytics.create({
-    data: {
-      creatorId,
-      views: 0,
-      likes: 0,
-      shares: 0,
-    },
-  });
-
-  return content;
+ 
 };
 
 export const updateContent = async (contentId: string, creatorId: string, data: UpdateContentInput) => {
   // Verify content belongs to creator
-  const content = await db.content.findFirst({
+  const content = await db.stream.findFirst({
     where: { id: contentId, creatorId },
   });
 
@@ -87,7 +66,7 @@ export const updateContent = async (contentId: string, creatorId: string, data: 
     throw new Error('Content not found or access denied');
   }
 
-  return await db.content.update({
+  return await db.stream.update({
     where: { id: contentId },
     data,
   });
@@ -95,7 +74,7 @@ export const updateContent = async (contentId: string, creatorId: string, data: 
 
 export const deleteContent = async (contentId: string, creatorId: string) => {
   // Verify content belongs to creator
-  const content = await db.content.findFirst({
+  const content = await db.stream.findFirst({
     where: { id: contentId, creatorId },
   });
 
@@ -103,19 +82,19 @@ export const deleteContent = async (contentId: string, creatorId: string) => {
     throw new Error('Content not found or access denied');
   }
 
-  return await db.content.delete({
+  return await db.stream.delete({
     where: { id: contentId },
   });
 };
 
 export const getContent = async (creatorId: string, contentId?: string) => {
   if (contentId) {
-    return await db.content.findFirst({
+    return await db.stream.findFirst({
       where: { id: contentId, creatorId },
     });
   }
 
-  return await db.content.findMany({
+  return await db.stream.findMany({
     where: { creatorId },
     orderBy: { createdAt: 'desc' },
   });
@@ -145,8 +124,7 @@ export const getCreatorProfile = async (creatorId: string) => {
       createdAt: true,
       _count: {
         select: {
-          content: true,
-          analytics: true,
+        
         },
       },
     },

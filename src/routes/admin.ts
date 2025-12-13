@@ -6,8 +6,10 @@ import {
   removeUser,
   changeUserStatus,
   getDashboard,
-  getCreatorDetails, 
-  incrementUserWarnings
+  getCreatorDetails,
+  incrementUserWarnings,
+  getFlaggedMessagesController,
+  getFlaggedContentController
 } from '../controllers/adminController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -30,4 +32,9 @@ router.get('/users', getUsers);
 router.patch('/user/:userId', changeUserStatus)
 router.delete('/users/:userType/:userId', removeUser);
 
+// Moderation routes
+router.get('/moderation/messages', getFlaggedMessagesController);
+router.get('/moderation/content', getFlaggedContentController);
+
 export default router;
+

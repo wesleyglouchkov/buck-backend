@@ -68,6 +68,8 @@ export const subscribeToCreator = async (memberId: string, creatorId: string) =>
   return await db.subscription.create({
     data: {
       memberId,
+      creatorId,
+      fee: 0,
     },
   });
 };
@@ -118,8 +120,8 @@ export const getMemberProfile = async (memberId: string) => {
 
 export const getMemberRecommendations = async (memberId: string) => {
   // Get recommended content based on subscriptions and popular content
-  const popularContent = await db.content.findMany({
-    where: { isPublished: true },
+  const popularContent = await db.stream.findMany({
+    where: { creatorId: memberId },
     orderBy: { createdAt: 'desc' },
     take: 10,
     include: {

@@ -12,7 +12,9 @@ import {
   getDashboardStats,
   getTopCreators,
   getCreatorProfile,
-  incrementUserWarningsService
+  incrementUserWarningsService,
+  getFlaggedMessages,
+  getFlaggedContent
 } from '../services/adminService';
 
 
@@ -142,8 +144,8 @@ export const incrementUserWarnings = asyncHandler(async (req: Request, res: Resp
   }
 
   const updatedUser = await incrementUserWarningsService(
-    userId, 
-    userType, 
+    userId,
+    userType,
     warningMessage || 'A warning has been issued on your account'
   );
 
@@ -155,4 +157,31 @@ export const incrementUserWarnings = asyncHandler(async (req: Request, res: Resp
     },
   });
 });
- 
+
+// Get flagged messages with filters
+export const getFlaggedMessagesController = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const search = (req.query.search as string) || undefined;
+  const badWords = req.query.badWords ? (req.query.badWords as string).split(',') : undefined;
+
+  const result = await getFlaggedMessages({ page, limit, search, badWords });
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});
+
+// Get flagged content (streams/videos) - no search needed
+export const getFlaggedContentController = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+
+  const result = await getFlaggedContent({ page, limit });
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});
