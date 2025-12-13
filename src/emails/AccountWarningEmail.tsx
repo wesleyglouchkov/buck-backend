@@ -43,6 +43,9 @@ export const AccountWarningEmail = ({
                             <strong>Please be advised:</strong> Further violations may result in temporary or permanent suspension of your account.
                         </Text>
                         <Text style={text}>
+                            <strong>Community Guidelines Reminder:</strong> Please do not use abusive language in chat or streams. We strive to maintain a respectful and welcoming environment for all members of the Buck community.
+                        </Text>
+                        <Text style={text}>
                             If you believe this warning was issued in error, please contact our support team immediately.
                         </Text>
                         <Text style={text}>
