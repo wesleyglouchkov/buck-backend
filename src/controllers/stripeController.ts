@@ -270,6 +270,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       }
       case 'account.updated': {
         const account = event.data.object as Stripe.Account;
+        console.log(account.details_submitted, '<-------Details submitted')
         const accountId = account.id;
         try {
           await db.user.updateMany({
