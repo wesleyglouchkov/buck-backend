@@ -47,19 +47,16 @@ app.use(cors({
 // app.set("trust proxy", true)
 
 
-app.use(bodyParser.json({
-    verify: (req: any, res, buf) => {
-      req.rawBody = buf.toString();
-    }
-  }));
+app.use(express.json({
+  limit: '100mb',
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
-
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
-
-
-// Body parsing middleware
-app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
+
 app.use(cookieParser());
 
 // Logging middleware
@@ -68,6 +65,8 @@ app.use(morgan('combined', {
     write: (message: string) => logger.info(message.trim())
   }
 }));
+
+app.post('/api/stripe/webhook', stripeWebhook);
 
 // Health check endpoint
 app.get('/health', (req: express.Request, res: express.Response) => {
