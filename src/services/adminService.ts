@@ -1,5 +1,6 @@
 import { db } from '../utils/database';
 import { sendAccountWarningEmail, sendAccountSuspensionEmail } from './emailService';
+import { calculateCreatorRevenue } from '../utils/revenueCalculator';
 
 export const getAdminDashboardAnalytics = async () => {
   // Get analytics data for admin dashboard
@@ -132,7 +133,26 @@ export const getAllUsers = async (query: { page: number, limit: number, type: 'c
             subscriptions: true
           })
         }
-      }
+      },
+      // For creators: fetch revenue data
+      ...(isCreator && {
+        tipCreatorTransactions: {
+          where: {
+            status: 'completed'
+          },
+          select: {
+            creator_receives_cents: true
+          }
+        },
+        subscribers: {
+          where: {
+            status: 'active'
+          },
+          select: {
+            fee: true
+          }
+        }
+      })
     },
     skip: offset,
     take: limit,
@@ -158,7 +178,8 @@ export const getAllUsers = async (query: { page: number, limit: number, type: 'c
     ...(isCreator ? {
       followers: user._count.followers,
       subscriberCount: user._count.subscribers,
-      totalStreams: user._count.createdStreams
+      totalStreams: user._count.createdStreams,
+      revenue: calculateCreatorRevenue(user.tipCreatorTransactions || [], user.subscribers || [])
     } : {
       following: user._count.following,
       subscriptions: user._count.subscriptions
@@ -286,20 +307,10 @@ export const getTopCreators = async () => {
 
   // Calculate total revenue for each creator and prepare the data
   const creatorsWithStats = creators.map((creator) => {
-    // Sum up all completed tip transactions (creator_receives_cents)
-    const totalTipRevenueCents = creator.tipCreatorTransactions.reduce(
-      (sum, transaction) => sum + transaction.creator_receives_cents,
-      0
+    const totalRevenue = calculateCreatorRevenue(
+      creator.tipCreatorTransactions,
+      creator.subscribers
     );
-
-    // Sum up all active subscription fees (convert Decimal to number)
-    const totalSubscriptionRevenue = creator.subscribers.reduce(
-      (sum, subscription) => sum + subscription.fee.toNumber(),
-      0
-    );
-
-    // Convert tip cents to dollars and add subscription revenue
-    const totalRevenue = (totalTipRevenueCents / 100) + totalSubscriptionRevenue;
 
     return {
       id: creator.id,
