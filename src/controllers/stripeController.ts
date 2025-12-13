@@ -220,10 +220,9 @@ export const stripeWebhook = async (req: Request, res: Response) => {
     console.log("💫 Received webhook", req.headers);
   try {
     const signature = req.headers['stripe-signature'];
+
     if (!signature) return res.status(400).send('Missing stripe-signature');
-
     if (!STRIPE_WEBHOOK_SECRET) return res.status(500).send('Webhook secret not configured');
-
     if (!req.rawBody) return res.status(400).send('Missing raw body');
 
     let event;
