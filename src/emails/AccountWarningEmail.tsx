@@ -37,10 +37,14 @@ export const AccountWarningEmail = ({
                         </Text>
 
                         {violatingContent && (
-                            <div style={violatingContentStyles}>
-                                <Text>Below is the content from you on Buck that was found to be in violation of our community guidelines:</Text>
-                                <Text style={text}>{violatingContent}</Text>
-                            </div>
+                            <>
+                                <Text style={text}>
+                                    Below is the content from you on Buck that was found to be in violation of our community guidelines:
+                                </Text>
+                                <div style={warningBox}>
+                                    <Text style={violatingContentStyles}>{violatingContent}</Text>
+                                </div>
+                            </>
                         )}
                         <Text style={text}>
                             This is warning <strong>{warningCount} </strong> and your account may be subject to suspension.
