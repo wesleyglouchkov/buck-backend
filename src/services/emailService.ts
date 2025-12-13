@@ -126,7 +126,7 @@ export const sendHelpRequestEmail = async (data: {
             from: 'Buck Help <onboarding@resend.dev>',
             to: 'tchetan308@gmail.com', //TODO: Admin email to be changed
             replyTo: data.email,
-            subject: `Buck - New Help Request from ${data.name}`,
+            subject: `Buck - Help Request from ${data.name}`,
             react: React.createElement(HelpRequestEmail, {
                 name: data.name,
                 email: data.email,
