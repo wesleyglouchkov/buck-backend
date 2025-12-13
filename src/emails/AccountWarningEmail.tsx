@@ -15,12 +15,14 @@ interface AccountWarningEmailProps {
     warningMessage?: string;
     warningCount?: number;
     maxWarnings?: number;
+    violatingContent?: string;
 }
 
 export const AccountWarningEmail = ({
     username = "User",
     warningMessage = "A violation of our community guidelines",
     warningCount = 1,
+    violatingContent = ""
 }: AccountWarningEmailProps) => {
     return (
         <Html>
@@ -33,9 +35,13 @@ export const AccountWarningEmail = ({
                         <Text style={text}>
                             We're reaching out to inform you about a recent issue with your account:
                         </Text>
-                        <div style={warningBox}>
-                            <Text style={warningText}>"{warningMessage}"</Text>
-                        </div>
+
+                        {violatingContent && (
+                            <div style={violatingContentStyles}>
+                                <Text>Below is the content from you on Buck that was found to be in violation of our community guidelines:</Text>
+                                <Text style={text}>{violatingContent}</Text>
+                            </div>
+                        )}
                         <Text style={text}>
                             This is warning <strong>{warningCount} </strong> and your account may be subject to suspension.
                         </Text>
@@ -81,6 +87,13 @@ const text = {
     color: "#404040",
     lineHeight: "26px",
     margin: "16px 0",
+};
+
+const violatingContentStyles = {
+    ...text,
+    fontStyle: "italic",
+    margin: 0,
+    color: "#ff3700ff",
 };
 
 const warningBox = {

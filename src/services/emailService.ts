@@ -35,7 +35,8 @@ export const sendResetPasswordEmail = async (email: string, name: string, token:
     }
 };
 
-export const sendAccountWarningEmail = async (email: string, username: string, warningMessage: string, warningCount: number) => {
+export const sendAccountWarningEmail = async (email: string, username: string, warningMessage: string, warningCount: number, 
+    violatingContent: string) => {
     if (!process.env.RESEND_API_KEY) {
         console.error('RESEND_API_KEY is missing');
         return;
@@ -50,6 +51,7 @@ export const sendAccountWarningEmail = async (email: string, username: string, w
                 username,
                 warningMessage,
                 warningCount,
+                violatingContent
             }),
         });
 

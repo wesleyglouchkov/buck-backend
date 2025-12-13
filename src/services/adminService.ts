@@ -249,7 +249,8 @@ interface UserWithWarnings {
   username: string | null;
 }
 
-export const incrementUserWarningsService = async (userId: string, userType: 'creator' | 'member', warningMessage: string = 'Violation of community guidelines'): Promise<UserWithWarnings> => {
+export const incrementUserWarningsService = async (userId: string, userType: 'creator' | 'member', warningMessage: string = 'Violation of community guidelines', 
+  violatingContent: string): Promise<UserWithWarnings> => {
   let updatedUser: UserWithWarnings;
 
   const user = await db.user.findUnique({
@@ -274,6 +275,7 @@ export const incrementUserWarningsService = async (userId: string, userType: 'cr
       updatedUser.username || 'User',
       warningMessage,
       updatedUser.isWarnedTimes,
+      violatingContent
     );
   } catch (error) {
     console.error('Failed to send warning email:', error);

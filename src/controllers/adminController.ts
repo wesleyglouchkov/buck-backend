@@ -133,7 +133,7 @@ export const changeUserStatus = asyncHandler(async (req: Request, res: Response)
 // Send warning email and increment count
 export const incrementUserWarnings = asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { userType, warningMessage } = req.body;
+  const { userType, warningMessage, violatingContent } = req.body;
 
   if (!userId || !userType) {
     throw new Error('User ID and type are required');
@@ -146,7 +146,8 @@ export const incrementUserWarnings = asyncHandler(async (req: Request, res: Resp
   const updatedUser = await incrementUserWarningsService(
     userId,
     userType,
-    warningMessage || 'A warning has been issued on your account'
+    warningMessage || 'A warning has been issued on your account',
+    violatingContent
   );
 
   res.status(200).json({
