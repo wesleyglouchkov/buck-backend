@@ -34,26 +34,15 @@ export const getCreatorDashboardAnalytics = async (creatorId: string) => {
 };
 
 export const getCreatorDashboardChartData = async (creatorId: string) => {
-  const analytics = await db.stream.findMany({
-    where: { creatorId },
-    orderBy: { createdAt: 'desc' },
-    take: 7,
-  });
 
-  // Convert to chart format
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return days.map((day, index) => ({
-    name: day,
-    // value: analytics[index]?.views || 0,
-  }));
 };
 
 export const getCreatorRecentContent = async (creatorId: string) => {
-  
+
 };
 
 export const createContent = async (creatorId: string, data: CreateContentInput) => {
- 
+
 };
 
 export const updateContent = async (contentId: string, creatorId: string, data: UpdateContentInput) => {
@@ -108,8 +97,8 @@ export const updateCreatorProfile = async (creatorId: string, data: UpdateProfil
 };
 
 export const getCreatorProfile = async (creatorId: string) => {
-  return await db.user.findUnique({
-    where: { id: creatorId, role: 'CREATOR' },
+  const creator = await db.user.findUnique({
+    where: { id: creatorId },
     select: {
       id: true,
       name: true,
@@ -122,11 +111,22 @@ export const getCreatorProfile = async (creatorId: string) => {
       avatar: true,
       isActive: true,
       createdAt: true,
+      isWarnedTimes: true,
+      subscriptionPrice: true,
       _count: {
         select: {
-        
+          followers: true,
+          subscribers: true,
+          createdStreams: true,
         },
       },
     },
   });
+
+  if (!creator) throw new Error('Creator not found');
+
+  return {
+    ...creator,
+    subscriptionPrice: creator.subscriptionPrice ? creator.subscriptionPrice.toNumber() : null,
+  };
 };
