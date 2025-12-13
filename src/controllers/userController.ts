@@ -20,8 +20,9 @@ import {
   updateMemberProfile,
   getMemberProfile,
   getMemberRecommendations,
-  changeUserRole
+  changeUserRole,
 } from '../services/memberService';
+import { sendHelpRequestEmail } from '../services/emailService';
 import { createContentSchema, updateContentSchema, updateProfileSchema } from '../utils/validation';
 
 // Creator Controllers
@@ -134,7 +135,27 @@ export const getProfile = asyncHandler(async (req: AuthenticatedRequest, res: Re
 export const changeRole = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.body.userId;
   const updatedUser = await changeUserRole(userId);
-  res.status(200).json({ success: true, message: 'Role updated successfully',
-     data: updatedUser 
-    });
+  res.status(200).json({
+    success: true, message: 'Role updated successfully',
+    data: updatedUser
+  });
+});
+
+export const sendHelpRequestAsEmailToAdmin = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { name, email, phoneNumber, country, issue } = req.body;
+
+  // Basic validation - check required fields
+  if (!name || !email || !issue) {
+    return res.status(400).json({ success: false, message: 'Name, email, and issue are required' });
+  }
+
+  await sendHelpRequestEmail({
+    name,
+    email,
+    phone: phoneNumber || 'Not provided',
+    country: country || 'Not provided',
+    issue
+  });
+
+  res.status(200).json({ success: true, message: 'Help request sent successfully' });
 });
