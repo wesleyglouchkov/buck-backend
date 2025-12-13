@@ -37,7 +37,7 @@ export const AccountWarningEmail = ({
                             <Text style={warningText}>"{warningMessage}"</Text>
                         </div>
                         <Text style={text}>
-                            This is warning <strong>{warningCount} </strong> before your account may be subject to suspension.
+                            This is warning <strong>{warningCount} </strong> and your account may be subject to suspension.
                         </Text>
                         <Text style={text}>
                             <strong>Please be advised:</strong> Further violations may result in temporary or permanent suspension of your account.
