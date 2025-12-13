@@ -94,19 +94,76 @@ export const getAllUsers = async (query: { page: number, limit: number, type: 'c
   } : {};
 
   const roleType = type.toUpperCase() as 'CREATOR' | 'MEMBER';
-  return await db.user.findMany({
+
+  // Different counts based on role type
+  const isCreator = roleType === 'CREATOR';
+
+  const users = await db.user.findMany({
     where: {
       ...whereClause,
       role: roleType,
-      isActive
+      isActive,
     },
-    select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, isActive: true, subscriptionPrice: true, stripe_connected: true, stripe_onboarding_completed: true, isWarnedTimes: true },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      email: true,
+      bio: true,
+      avatar: true,
+      createdAt: true,
+      role: true,
+      isActive: true,
+      subscriptionPrice: true,
+      stripe_connected: true,
+      stripe_onboarding_completed: true,
+      isWarnedTimes: true,
+      _count: {
+        select: {
+          // For creators: show followers, subscribers, and streams
+          ...(isCreator && {
+            followers: true,
+            subscribers: true,
+            createdStreams: true
+          }),
+          // For members: show following and subscriptions
+          ...(!isCreator && {
+            following: true,
+            subscriptions: true
+          })
+        }
+      }
+    },
     skip: offset,
     take: limit,
     orderBy: { createdAt: 'desc' }
   });
 
-  return [];
+  // Transform the response to include readable field names
+  return users.map(user => ({
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    bio: user.bio,
+    avatar: user.avatar,
+    createdAt: user.createdAt,
+    role: user.role,
+    isActive: user.isActive,
+    subscriptionPrice: user.subscriptionPrice ? user.subscriptionPrice.toNumber() : null,
+    stripeConnected: user.stripe_connected,
+    stripeOnboardingCompleted: user.stripe_onboarding_completed,
+    warningCount: user.isWarnedTimes,
+    // Conditional stats based on role
+    ...(isCreator ? {
+      followers: user._count.followers,
+      subscriberCount: user._count.subscribers,
+      totalStreams: user._count.createdStreams
+    } : {
+      following: user._count.following,
+      subscriptions: user._count.subscriptions
+    })
+  }));
 };
 
 export const deleteUser = async (userId: string, userType: 'admin' | 'creator' | 'member') => {
@@ -178,7 +235,7 @@ export const getDashboardStats = async () => {
 
   // 3. Financials (Mocked)
   const totalRevenue = 142890;
-  const avgRevenuePerCreator = 1234;
+  const avgRevenuePerCreator = 12345;
 
   return {
     overview: {
@@ -199,7 +256,8 @@ export const getTopCreators = async () => {
   // Fetch creators with their follower count, tip revenue, and subscription revenue
   const creators = await db.user.findMany({
     where: { isActive: true, role: 'CREATOR' },
-    select: { id: true, name: true, username: true, email: true, bio: true, avatar: true, subscriptionPrice: true, stripe_connected: true,  stripe_onboarding_completed: true,  isWarnedTimes: true,  createdAt: true,
+    select: {
+      id: true, name: true, username: true, email: true, bio: true, avatar: true, subscriptionPrice: true, stripe_connected: true, stripe_onboarding_completed: true, isWarnedTimes: true, createdAt: true,
       _count: {
         select: {
           followers: true, // Count of Follow records where this user is followed
