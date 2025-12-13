@@ -44,7 +44,7 @@ app.use(cors({
 }));
 
 
-app.set("trust proxy", true)
+// app.set("trust proxy", true)
 
 
 app.use(bodyParser.json({
