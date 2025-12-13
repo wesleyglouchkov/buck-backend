@@ -63,25 +63,6 @@ export const getAdminDashboardChartData = async () => {
   };
 };
 
-export const getAdminRecentActivity = async () => {
-  // Get recent activity (user registrations, content creation, etc.)
-  const recentUsers = await db.user.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, email: true, createdAt: true, role: true },
-  });
-
-  const recentContent = await db.stream.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    include: { creator: { select: { name: true } } },
-  });
-
-  return {
-    recentUsers,
-    recentContent,
-  };
-};
 
 export const getAllUsers = async (query: { page: number, limit: number, type: 'creator' | 'member', search?: string, isActive?: boolean }) => {
   const { page, limit, type = 'creator', search, isActive } = query;

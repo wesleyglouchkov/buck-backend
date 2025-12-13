@@ -1,7 +1,5 @@
 import { Router } from 'express';
 import {
-  getDashboardAnalytics,
-  getRecentActivity,
   getUsers,
   removeUser,
   changeUserStatus,
@@ -22,8 +20,6 @@ router.use(authorize('ADMIN'));
 // Dashboard routes
 router.get('/dashboard', getDashboard);
 router.get('/get-creater-profile/:id', getCreatorDetails);
-router.get('/analytics', getDashboardAnalytics);
-router.get('/recent-activity', getRecentActivity);
 router.patch('/increment-warnings/:userId', incrementUserWarnings);
 
 

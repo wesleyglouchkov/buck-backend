@@ -4,7 +4,6 @@ import { parseBoolean } from '../utils/helpers';
 import {
   getAdminDashboardAnalytics,
   getAdminDashboardChartData,
-  getAdminRecentActivity,
   getAllUsers,
   deleteUser,
   toggleUserStatus,
@@ -77,14 +76,7 @@ export const getDashboardAnalytics = asyncHandler(async (req: Request, res: Resp
 });
 
 
-export const getRecentActivity = asyncHandler(async (req: Request, res: Response) => {
-  const activity = await getAdminRecentActivity();
 
-  res.status(200).json({
-    success: true,
-    data: activity,
-  });
-});
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
