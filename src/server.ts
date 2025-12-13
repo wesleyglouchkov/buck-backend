@@ -47,11 +47,8 @@ app.use(cors({
 // app.set("trust proxy", true)
 
 
-app.use(bodyParser.json({
-    verify: (req: any, res, buf) => {
-      req.rawBody = buf.toString();
-    }
-  }));
+
+
 
 
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
@@ -63,10 +60,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Logging middleware
-app.use(morgan('combined', { 
-  stream: { 
-    write: (message: string) => logger.info(message.trim()) 
-  } 
+app.use(morgan('combined', {
+  stream: {
+    write: (message: string) => logger.info(message.trim())
+  }
 }));
 
 // Health check endpoint
