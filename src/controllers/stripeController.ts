@@ -224,10 +224,12 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 
     if (!STRIPE_WEBHOOK_SECRET) return res.status(500).send('Webhook secret not configured');
 
+    if (!req.rawBody) return res.status(400).send('Missing raw body');
+
     let event;
     try {
-        event = stripe.webhooks.constructEvent(req.body, signature as string, STRIPE_WEBHOOK_SECRET);
-        console.log("⚽️", event)
+      event = stripe.webhooks.constructEvent(req.rawBody, signature as string, STRIPE_WEBHOOK_SECRET);
+      console.log("⚽️", event)
     } catch (err: any) {
       logger.error('Webhook signature verification failed', err);
       return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -245,7 +247,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
               completed_at: new Date(),
             },
           });
-        } catch {}
+        } catch { }
         break;
       }
       case 'payment_intent.succeeded': {
@@ -255,7 +257,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
             where: { stripe_payment_intent_id: pi.id },
             data: { status: 'completed', completed_at: new Date() },
           });
-        } catch {}
+        } catch { }
         break;
       }
       case 'payment_intent.payment_failed': {
@@ -265,7 +267,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
             where: { stripe_payment_intent_id: pi.id },
             data: { status: 'failed' },
           });
-        } catch {}
+        } catch { }
         break;
       }
       case 'account.updated': {
@@ -282,7 +284,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
               stripe_onboarding_completed: account.details_submitted,
             },
           });
-        } catch {}
+        } catch { }
         break;
       }
       default:
