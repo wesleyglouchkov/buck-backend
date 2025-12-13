@@ -137,9 +137,7 @@ export const toggleUserStatus = async (userId: string, userType: 'creator' | 'me
 export const changeAnyUserStatus = async (userId: string) => {
   const user = await db.user.findUnique({ where: { id: userId } });
 
-  if (!user) {
-    throw new Error('User not found');
-  }
+  if (!user) throw new Error('User not found');
 
   const newIsActive = !user.isActive;
 
@@ -198,20 +196,81 @@ export const getDashboardStats = async () => {
 };
 
 export const getTopCreators = async () => {
-  // TODO: These thing needs to calculate based on the total views and total revenue
-  // For now, just fetch 5 creators and mock the rest
+  // Fetch creators with their follower count, tip revenue, and subscription revenue
   const creators = await db.user.findMany({
-    take: 5,
     where: { isActive: true, role: 'CREATOR' },
-    select: { id: true, name: true, username: true },
+    select: { id: true, name: true, username: true, email: true, bio: true, avatar: true, subscriptionPrice: true, stripe_connected: true,  stripe_onboarding_completed: true,  isWarnedTimes: true,  createdAt: true,
+      _count: {
+        select: {
+          followers: true, // Count of Follow records where this user is followed
+          subscribers: true, // Count of active subscribers
+          createdStreams: true // Total streams created
+        }
+      },
+      tipCreatorTransactions: {
+        where: {
+          status: 'completed' // Only count completed transactions
+        },
+        select: {
+          creator_receives_cents: true
+        }
+      },
+      subscribers: {
+        where: {
+          status: 'active' // Only count active subscriptions
+        },
+        select: {
+          fee: true // Monthly subscription fee
+        }
+      }
+    },
   });
 
-  return creators.map((c, index) => ({
-    ...c,
-    rank: index + 1,
-    followers: Math.floor(Math.random() * 50000) + 1000,
-    revenue: Math.floor(Math.random() * 10000) + 500,
-  }));
+  // Calculate total revenue for each creator and prepare the data
+  const creatorsWithStats = creators.map((creator) => {
+    // Sum up all completed tip transactions (creator_receives_cents)
+    const totalTipRevenueCents = creator.tipCreatorTransactions.reduce(
+      (sum, transaction) => sum + transaction.creator_receives_cents,
+      0
+    );
+
+    // Sum up all active subscription fees (convert Decimal to number)
+    const totalSubscriptionRevenue = creator.subscribers.reduce(
+      (sum, subscription) => sum + subscription.fee.toNumber(),
+      0
+    );
+
+    // Convert tip cents to dollars and add subscription revenue
+    const totalRevenue = (totalTipRevenueCents / 100) + totalSubscriptionRevenue;
+
+    return {
+      id: creator.id,
+      name: creator.name,
+      username: creator.username,
+      email: creator.email,
+      bio: creator.bio,
+      avatar: creator.avatar,
+      subscriptionPrice: creator.subscriptionPrice ? creator.subscriptionPrice.toNumber() : null,
+      stripeConnected: creator.stripe_connected,
+      stripeOnboardingCompleted: creator.stripe_onboarding_completed,
+      warningCount: creator.isWarnedTimes,
+      joinedAt: creator.createdAt,
+      followers: creator._count.followers,
+      subscriberCount: creator._count.subscribers,
+      totalStreams: creator._count.createdStreams,
+      revenue: totalRevenue,
+    };
+  });
+
+  // Sort by revenue (descending) and take top 5
+  const topCreators = creatorsWithStats.sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
+    .map((creator, index) => ({
+      ...creator,
+      rank: index + 1,
+    }));
+
+  return topCreators;
 };
 
 export const getCreatorProfile = async (creatorId: string) => {
@@ -249,7 +308,7 @@ interface UserWithWarnings {
   username: string | null;
 }
 
-export const incrementUserWarningsService = async (userId: string, userType: 'creator' | 'member', warningMessage: string = 'Violation of community guidelines', 
+export const incrementUserWarningsService = async (userId: string, userType: 'creator' | 'member', warningMessage: string = 'Violation of community guidelines',
   violatingContent: string): Promise<UserWithWarnings> => {
   let updatedUser: UserWithWarnings;
 
@@ -285,7 +344,7 @@ export const incrementUserWarningsService = async (userId: string, userType: 'cr
 };
 
 // Get flagged messages with filters
-export const getFlaggedMessages = async (query: { page: number; limit: number; search?: string; badWords?: string[]}) => {
+export const getFlaggedMessages = async (query: { page: number; limit: number; search?: string; badWords?: string[] }) => {
   const { page, limit, search, badWords } = query;
   const offset = (page - 1) * limit;
 
@@ -315,7 +374,7 @@ export const getFlaggedMessages = async (query: { page: number; limit: number; s
         { OR: badWordConditions }
       ];
       delete whereClause.OR;
-    } 
+    }
     else {
       whereClause.OR = badWordConditions;
     }
