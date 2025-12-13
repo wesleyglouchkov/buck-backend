@@ -52,8 +52,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), strip
 
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(cookieParser());
 
 // Logging middleware
