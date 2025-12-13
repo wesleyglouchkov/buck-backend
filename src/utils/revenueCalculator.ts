@@ -25,3 +25,26 @@ export const calculateCreatorRevenue = (
     // Convert tip cents to dollars and add subscription revenue
     return (totalTipRevenueCents / 100) + totalSubscriptionRevenue;
 };
+
+/**
+ * Calculate total platform revenue from aggregated tip and subscription data
+ * @param totalTipCents - Total value of creator_receives_cents from all completed tips
+ * @param totalSubscriptionFees - Total value of all active subscription fees
+ * @returns Total revenue in dollars
+ */
+export const calculateTotalPlatformRevenue = (totalTipCents: number, totalSubscriptionFees: number | Prisma.Decimal): number => {
+    const subscriptionRevenue = typeof totalSubscriptionFees === 'number' ? totalSubscriptionFees : totalSubscriptionFees.toNumber();
+
+    return (totalTipCents / 100) + subscriptionRevenue;
+};
+
+/**
+ * Calculate average revenue per creator
+ * @param totalRevenue - Total calculated revenue in dollars
+ * @param activeCreatorCount - Number of active creators
+ * @returns Average revenue per creator in dollars
+ */
+export const calculateAverageCreatorRevenue = (totalRevenue: number,  activeCreatorCount: number): number => {
+    if (activeCreatorCount === 0) return 0;
+    return Number((totalRevenue / activeCreatorCount).toFixed(2));
+};

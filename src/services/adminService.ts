@@ -1,6 +1,6 @@
 import { db } from '../utils/database';
 import { sendAccountWarningEmail, sendAccountSuspensionEmail } from './emailService';
-import { calculateCreatorRevenue } from '../utils/revenueCalculator';
+import { calculateCreatorRevenue, calculateTotalPlatformRevenue, calculateAverageCreatorRevenue } from '../utils/revenueCalculator';
 
 export const getAdminDashboardAnalytics = async () => {
   // Get analytics data for admin dashboard
@@ -232,19 +232,37 @@ export const getDashboardStats = async () => {
     take: 5,
     where: { createdAt: { gte: sevenDaysAgo } },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, createdAt: true, role: true }
+    select: { id: true, name: true, createdAt: true, role: true, username: true, email: true, bio: true, avatar: true }
   });
 
-  // 3. Financials (Mocked)
-  const totalRevenue = 142890;
-  const avgRevenuePerCreator = 12345;
+  // 3. Financials (Real Data)
+  const processedTips = await db.tipTransaction.aggregate({
+    _sum: {
+      creator_receives_cents: true
+    },
+    where: {
+      status: 'completed'
+    }
+  });
+
+  const activeSubscriptions = await db.subscription.aggregate({
+    _sum: {
+      fee: true
+    },
+    where: {
+      status: 'active'
+    }
+  });
+
+  const totalRevenueEarnedByAllCreators = calculateTotalPlatformRevenue(processedTips._sum.creator_receives_cents || 0, activeSubscriptions._sum.fee || 0);
+  const avgRevenuePerCreator = calculateAverageCreatorRevenue(totalRevenueEarnedByAllCreators, activeCreators);
 
   return {
     overview: {
       totalUsers,
       activeCreators,
       totalContent,
-      totalRevenue,
+      totalRevenue: totalRevenueEarnedByAllCreators,
       avgRevenuePerCreator
     },
     recentSignups: {
