@@ -48,13 +48,15 @@ app.use(cors({
 // app.set("trust proxy", true)
 
 
+// Stripe webhook route - MUST be defined before global body parsers
+// Use express.raw() to get the exact buffer for signature verification
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
+  (req as any).rawBody = req.body;
+  next();
+}, stripeWebhook);
+
 // Body parsing middleware
-app.use(express.json({
-  limit: '100mb',
-  verify: (req: any, res, buf) => {
-    req.rawBody = buf;
-  }
-}));
+app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(cookieParser());
 
@@ -86,7 +88,7 @@ app.use('/api/users', userRoutes);
 
 // Creator specific routes (now includes webhook with raw body)
 app.use('/api/creator', creatorRoutes);
-app.post('/api/stripe/webhook', stripeWebhook);
+
 
 // Member specific routes
 app.use('/api/member', memberRoutes);
