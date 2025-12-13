@@ -47,6 +47,12 @@ app.use(cors({
 // app.set("trust proxy", true)
 
 
+app.use(bodyParser.json({
+    verify: (req: any, res, buf) => {
+      req.rawBody = buf.toString();
+    }
+  }));
+
 
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 

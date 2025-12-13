@@ -223,14 +223,14 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 
     if (!signature) return res.status(400).send('Missing stripe-signature');
     if (!STRIPE_WEBHOOK_SECRET) return res.status(500).send('Webhook secret not configured');
-    if (!Buffer.isBuffer(req.body)) {
+    if (!Buffer.isBuffer((req as any).rawBody)) {
       return res.status(400).send('Missing raw body buffer');
     } 
-    if (!(req as any).body) return res.status(400).send('Missing raw body');
+    if (!(req as any).rawBody) return res.status(400).send('Missing raw body');
 
     let event;
     try {
-      event = stripe.webhooks.constructEvent((req as any).body, signature as string, STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent((req as any).rawBody, signature as string, STRIPE_WEBHOOK_SECRET);
       console.log("⚽️", event)
     } catch (err: any) {
       logger.error('Webhook signature verification failed', err);
