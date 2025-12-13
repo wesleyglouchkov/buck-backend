@@ -223,6 +223,9 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 
     if (!signature) return res.status(400).send('Missing stripe-signature');
     if (!STRIPE_WEBHOOK_SECRET) return res.status(500).send('Webhook secret not configured');
+    if (!Buffer.isBuffer(req.body)) {
+      return res.status(400).send('Missing raw body buffer');
+    } 
     if (!(req as any).body) return res.status(400).send('Missing raw body');
 
     let event;
