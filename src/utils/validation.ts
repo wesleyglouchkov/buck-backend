@@ -33,6 +33,7 @@ export const updateProfileSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores').optional(),
   bio: z.string().optional(),
   avatar: z.string().url().optional(),
+  subscriptionPrice: z.number().optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
