@@ -109,9 +109,14 @@ export const getMemberProfile = async (memberId: string) => {
       avatar: true,
       isActive: true,
       createdAt: true,
+      updatedAt: true,
+      role: true,
+      bio: true,
+      isWarnedTimes: true,
       _count: {
         select: {
           subscriptions: true,
+          following: true,
         },
       },
     },
