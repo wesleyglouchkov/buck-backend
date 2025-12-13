@@ -100,7 +100,7 @@ export const getAllUsers = async (query: { page: number, limit: number, type: 'c
       role: roleType,
       isActive
     },
-    select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, isActive: true },
+    select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, isActive: true, subscriptionPrice: true, stripe_connected: true, stripe_onboarding_completed: true, isWarnedTimes: true },
     skip: offset,
     take: limit,
     orderBy: { createdAt: 'desc' }
