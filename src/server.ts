@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-
+import bodyParser from 'body-parser'
 // Import routes
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
@@ -41,19 +41,22 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
 }));
 
 
 // app.set("trust proxy", true)
 
 
-// Stripe webhook route - MUST be defined before global body parsers
-// Use express.raw() to get the exact buffer for signature verification
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
-  (req as any).rawBody = req.body;
-  next();
-}, stripeWebhook);
+app.use(bodyParser.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
+
+
+
+
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 // Body parsing middleware
 app.use(express.json({ limit: '100mb' }));
@@ -88,7 +91,6 @@ app.use('/api/users', userRoutes);
 
 // Creator specific routes (now includes webhook with raw body)
 app.use('/api/creator', creatorRoutes);
-
 
 // Member specific routes
 app.use('/api/member', memberRoutes);
