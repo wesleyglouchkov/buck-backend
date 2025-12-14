@@ -1,43 +1,19 @@
 import { Router } from 'express';
 import {
-  getCreatorDashboard,
-  getMemberDashboard,
-  getSubscriptions,
-  subscribe,
-  unsubscribe,
-  getRecommendations,
   updateProfile,
   getProfile,
   changeRole,
   sendHelpRequestAsEmailToAdmin
 } from '../controllers/userController';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
 router.post('/help-request', sendHelpRequestAsEmailToAdmin);
 
-// Shared routes
+// Shared routes of creator and member
 router.use(authenticate);
 router.route('/profile').get(getProfile).put(updateProfile);
 router.post('/change-role', changeRole);
-
-// Creator routes
-const creatorRouter = Router();
-creatorRouter.use(authorize('CREATOR'));
-creatorRouter.get('/dashboard', getCreatorDashboard);
-
-
-// Member routes
-const memberRouter = Router();
-memberRouter.use(authorize('MEMBER'));
-memberRouter.get('/dashboard', getMemberDashboard);
-memberRouter.get('/recommendations', getRecommendations);
-memberRouter.get('/subscriptions', getSubscriptions);
-memberRouter.post('/subscribe', subscribe);
-memberRouter.delete('/subscriptions/:subscriptionId', unsubscribe);
-
-router.use('/creator', creatorRouter);
-router.use('/member', memberRouter);
 
 export default router;

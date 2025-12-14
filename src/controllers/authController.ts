@@ -46,15 +46,6 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const getMe = asyncHandler(async (req: any, res: Response) => {
-  res.status(200).json({
-    success: true,
-    data: {
-      user: req.user,
-    },
-  });
-});
-
 export const checkAvailability = asyncHandler(async (req: Request, res: Response) => {
   const { username, email } = req.query;
 
