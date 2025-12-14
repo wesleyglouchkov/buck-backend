@@ -1,12 +1,12 @@
 import { db } from '../utils/database';
-import { CreateContentInput, UpdateContentInput, UpdateProfileInput } from '../utils/validation';
+import { CreateStreamInput, UpdateStreamInput, UpdateProfileInput } from '../utils/validation';
 
 export const getCreatorDashboardAnalytics = async (creatorId: string) => {
-  const totalContent = await db.stream.count({
+  const totalStreams = await db.stream.count({
     where: { creatorId }
   });
 
-  const publishedContent = await db.stream.count({
+  const publishedStreams = await db.stream.count({
     where: { creatorId }
   });
 
@@ -22,8 +22,8 @@ export const getCreatorDashboardAnalytics = async (creatorId: string) => {
   const totalShares = analytics.reduce((sum: number, item: any) => sum + item.shares, 0);
 
   return {
-    totalContent,
-    publishedContent,
+    totalContent: totalStreams,
+    publishedContent: publishedStreams,
     totalViews,
     totalLikes,
     totalShares,
@@ -37,58 +37,25 @@ export const getCreatorDashboardChartData = async (creatorId: string) => {
 
 };
 
-export const getCreatorRecentContent = async (creatorId: string) => {
+export const getCreatorRecentStreams = async (creatorId: string) => {
 
 };
 
-export const createContent = async (creatorId: string, data: CreateContentInput) => {
+export const createStream = async (creatorId: string, data: CreateStreamInput) => {
 
 };
 
-export const updateContent = async (contentId: string, creatorId: string, data: UpdateContentInput) => {
-  // Verify content belongs to creator
-  const content = await db.stream.findFirst({
-    where: { id: contentId, creatorId },
-  });
-
-  if (!content) {
-    throw new Error('Content not found or access denied');
-  }
-
-  return await db.stream.update({
-    where: { id: contentId },
-    data,
-  });
+export const updateStream = async (streamId: string, creatorId: string, data: UpdateStreamInput) => {
 };
 
-export const deleteContent = async (contentId: string, creatorId: string) => {
-  // Verify content belongs to creator
-  const content = await db.stream.findFirst({
-    where: { id: contentId, creatorId },
-  });
-
-  if (!content) {
-    throw new Error('Content not found or access denied');
-  }
-
-  return await db.stream.delete({
-    where: { id: contentId },
-  });
+export const deleteStream = async (streamId: string, creatorId: string) => {
 };
 
-export const getContent = async (creatorId: string, contentId?: string) => {
-  if (contentId) {
-    return await db.stream.findFirst({
-      where: { id: contentId, creatorId },
-    });
-  }
-
-  return await db.stream.findMany({
-    where: { creatorId },
-    orderBy: { createdAt: 'desc' },
-  });
+export const getStream = async (creatorId: string, streamId?: string) => {
 };
 
+
+//  Creator Profile Services
 export const updateCreatorProfile = async (creatorId: string, data: UpdateProfileInput) => {
   return await db.user.update({
     where: { id: creatorId, role: 'CREATOR' },

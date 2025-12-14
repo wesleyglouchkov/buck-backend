@@ -4,11 +4,11 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import {
   getCreatorDashboardAnalytics,
   getCreatorDashboardChartData,
-  getCreatorRecentContent,
-  createContent,
-  updateContent,
-  deleteContent,
-  getContent,
+  getCreatorRecentStreams,
+  createStream,
+  updateStream,
+  deleteStream,
+  getStream,
   updateCreatorProfile,
   getCreatorProfile
 } from '../services/creatorService';
@@ -23,90 +23,10 @@ import {
   changeUserRole,
 } from '../services/memberService';
 import { sendHelpRequestEmail } from '../services/emailService';
-import { createContentSchema, updateContentSchema, updateProfileSchema } from '../utils/validation';
+import { updateProfileSchema } from '../utils/validation';
 
-// Creator Controllers
-export const getCreatorDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const analytics = await getCreatorDashboardAnalytics(creatorId);
-  res.status(200).json({ success: true, data: analytics });
-});
 
-export const getCreatorChartData = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const chartData = await getCreatorDashboardChartData(creatorId);
-  res.status(200).json({ success: true, data: chartData });
-});
-
-export const getCreatorContent = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const content = await getCreatorRecentContent(creatorId);
-  res.status(200).json({ success: true, data: content });
-});
-
-export const createNewContent = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const validatedData = createContentSchema.parse(req.body);
-  const content = await createContent(creatorId, validatedData);
-  res.status(201).json({ success: true, message: 'Content created successfully', data: content });
-});
-
-export const updateExistingContent = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const { contentId } = req.params;
-  const validatedData = updateContentSchema.parse(req.body);
-  const content = await updateContent(contentId, creatorId, validatedData);
-  res.status(200).json({ success: true, message: 'Content updated successfully', data: content });
-});
-
-export const removeContent = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const { contentId } = req.params;
-  await deleteContent(contentId, creatorId);
-  res.status(200).json({ success: true, message: 'Content deleted successfully' });
-});
-
-export const getContentList = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const creatorId = req.user!.id;
-  const { contentId } = req.params;
-  const content = await getContent(creatorId, contentId);
-  res.status(200).json({ success: true, data: content });
-});
-
-// Member Controllers
-export const getMemberDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const memberId = req.user!.id;
-  const data = await getMemberDashboardData(memberId);
-  res.status(200).json({ success: true, data });
-});
-
-export const getSubscriptions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const memberId = req.user!.id;
-  const subscriptions = await getMemberSubscriptions(memberId);
-  res.status(200).json({ success: true, data: subscriptions });
-});
-
-export const subscribe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const memberId = req.user!.id;
-  const { creatorId } = req.body;
-  const subscription = await subscribeToCreator(memberId, creatorId);
-  res.status(201).json({ success: true, message: 'Subscribed successfully', data: subscription });
-});
-
-export const unsubscribe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const memberId = req.user!.id;
-  const { subscriptionId } = req.params;
-  await unsubscribeFromCreator(memberId, subscriptionId);
-  res.status(200).json({ success: true, message: 'Unsubscribed successfully' });
-});
-
-export const getRecommendations = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const memberId = req.user!.id;
-  const recommendations = await getMemberRecommendations(memberId);
-  res.status(200).json({ success: true, data: recommendations });
-});
-
-// Shared Controllers
+//=============================== Shared Controllers ===============================
 export const updateProfile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user!.id;
   const userRole = req.user!.role;
@@ -159,3 +79,46 @@ export const sendHelpRequestAsEmailToAdmin = asyncHandler(async (req: Authentica
 
   res.status(200).json({ success: true, message: 'Help request sent successfully' });
 });
+
+// ============================Creator Controllers ===============
+export const getCreatorDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const creatorId = req.user!.id;
+  const analytics = await getCreatorDashboardAnalytics(creatorId);
+  res.status(200).json({ success: true, data: analytics });
+});
+
+
+
+// ============================Member Controllers ===============
+export const getMemberDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const memberId = req.user!.id;
+  const data = await getMemberDashboardData(memberId);
+  res.status(200).json({ success: true, data });
+});
+
+export const getSubscriptions = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const memberId = req.user!.id;
+  const subscriptions = await getMemberSubscriptions(memberId);
+  res.status(200).json({ success: true, data: subscriptions });
+});
+
+export const subscribe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const memberId = req.user!.id;
+  const { creatorId } = req.body;
+  const subscription = await subscribeToCreator(memberId, creatorId);
+  res.status(201).json({ success: true, message: 'Subscribed successfully', data: subscription });
+});
+
+export const unsubscribe = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const memberId = req.user!.id;
+  const { subscriptionId } = req.params;
+  await unsubscribeFromCreator(memberId, subscriptionId);
+  res.status(200).json({ success: true, message: 'Unsubscribed successfully' });
+});
+
+export const getRecommendations = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const memberId = req.user!.id;
+  const recommendations = await getMemberRecommendations(memberId);
+  res.status(200).json({ success: true, data: recommendations });
+});
+

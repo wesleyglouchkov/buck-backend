@@ -7,7 +7,7 @@ import {
   getCreatorDetails,
   incrementUserWarnings,
   getFlaggedMessagesController,
-  getFlaggedContentController
+  getFlaggedStreamsController
 } from '../controllers/adminController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -30,7 +30,7 @@ router.delete('/users/:userType/:userId', removeUser);
 
 // Moderation routes
 router.get('/moderation/messages', getFlaggedMessagesController);
-router.get('/moderation/content', getFlaggedContentController);
+router.get('/moderation/content', getFlaggedStreamsController);
 
 export default router;
 

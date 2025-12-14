@@ -8,12 +8,12 @@ export const getAdminDashboardAnalytics = async () => {
   const activeCreators = await db.user.count({
     where: { isActive: true, role: 'CREATOR' }
   });
-  const totalContent = await db.stream.count();
+  const totalStreams = await db.stream.count();
 
   return {
     totalUsers,
     activeCreators,
-    totalContent,
+    totalContent: totalStreams,
   };
 };
 
@@ -218,7 +218,7 @@ export const getDashboardStats = async () => {
   // 1. Basic Counts
   const totalUsers = await db.user.count();
   const activeCreators = await db.user.count({ where: { isActive: true, role: 'CREATOR' } });
-  const totalContent = await db.stream.count();
+  const totalStreams = await db.stream.count();
 
   // 2. Recent Signups (Members only for now as per "new users")
   const sevenDaysAgo = new Date();
@@ -261,7 +261,7 @@ export const getDashboardStats = async () => {
     overview: {
       totalUsers,
       activeCreators,
-      totalContent,
+      totalContent: totalStreams,
       totalRevenue: totalRevenueEarnedByAllCreators,
       avgRevenuePerCreator
     },
@@ -517,8 +517,8 @@ export const getFlaggedMessages = async (query: { page: number; limit: number; s
   };
 };
 
-// Get flagged content (streams/videos) with filters
-export const getFlaggedContent = async (query: {
+// Get flagged streams (streams/videos) with filters
+export const getFlaggedStreams = async (query: {
   page: number;
   limit: number;
 }) => {
@@ -530,7 +530,7 @@ export const getFlaggedContent = async (query: {
     livestreamId: { not: null }
   };
 
-  const [flaggedContent, total] = await Promise.all([
+  const [flaggedStreams, total] = await Promise.all([
     db.flaggedContent.findMany({
       where: whereClause,
       include: {
@@ -573,7 +573,7 @@ export const getFlaggedContent = async (query: {
   ]);
 
   // Transform the data to match frontend expectations
-  const transformedContent = flaggedContent.map(item => ({
+  const transformedStreams = flaggedStreams.map(item => ({
     id: item.id,
     streamId: item.livestream?.id,
     title: item.livestream?.title || 'Untitled Stream',
@@ -597,7 +597,7 @@ export const getFlaggedContent = async (query: {
   }));
 
   return {
-    content: transformedContent,
+    content: transformedStreams,
     pagination: {
       page,
       limit,

@@ -17,7 +17,7 @@ export const signupSchema = z.object({
 });
 
 // Creator validation schemas
-export const createContentSchema = z.object({
+export const createStreamSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   type: z.string().min(1, 'Type is required'),
@@ -25,7 +25,7 @@ export const createContentSchema = z.object({
   isPublished: z.boolean().optional().default(false),
 });
 
-export const updateContentSchema = createContentSchema.partial();
+export const updateStreamSchema = createStreamSchema.partial();
 
 // Member validation schemas
 export const updateProfileSchema = z.object({
@@ -38,8 +38,8 @@ export const updateProfileSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
-export type CreateContentInput = z.infer<typeof createContentSchema>;
-export type UpdateContentInput = z.infer<typeof updateContentSchema>;
+export type CreateStreamInput = z.infer<typeof createStreamSchema>;
+export type UpdateStreamInput = z.infer<typeof updateStreamSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 export const formatZodErrors = (errors: z.ZodError<any>): any => {

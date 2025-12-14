@@ -1,12 +1,6 @@
 import { Router } from 'express';
 import {
   getCreatorDashboard,
-  getCreatorChartData,
-  getCreatorContent,
-  createNewContent,
-  updateExistingContent,
-  removeContent,
-  getContentList,
   getMemberDashboard,
   getSubscriptions,
   subscribe,
@@ -32,12 +26,7 @@ router.post('/change-role', changeRole);
 const creatorRouter = Router();
 creatorRouter.use(authorize('CREATOR'));
 creatorRouter.get('/dashboard', getCreatorDashboard);
-creatorRouter.get('/chart-data', getCreatorChartData);
-creatorRouter.get('/content/recent', getCreatorContent);
-creatorRouter.get('/content/:contentId?', getContentList);
-creatorRouter.post('/content', createNewContent);
-creatorRouter.put('/content/:contentId', updateExistingContent);
-creatorRouter.delete('/content/:contentId', removeContent);
+
 
 // Member routes
 const memberRouter = Router();

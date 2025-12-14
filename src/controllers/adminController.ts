@@ -13,7 +13,7 @@ import {
   getCreatorProfile,
   incrementUserWarningsService,
   getFlaggedMessages,
-  getFlaggedContent
+  getFlaggedStreams
 } from '../services/adminService';
 
 
@@ -166,12 +166,12 @@ export const getFlaggedMessagesController = asyncHandler(async (req: Request, re
   });
 });
 
-// Get flagged content (streams/videos) - no search needed
-export const getFlaggedContentController = asyncHandler(async (req: Request, res: Response) => {
+// Get flagged streams (streams/videos) - no search needed
+export const getFlaggedStreamsController = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
 
-  const result = await getFlaggedContent({ page, limit });
+  const result = await getFlaggedStreams({ page, limit });
 
   res.status(200).json({
     success: true,
