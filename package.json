@@ -39,7 +39,8 @@
     "resend": "^6.5.2",
     "stripe": "^20.0.0",
     "winston": "^3.11.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@prisma/internals": "^7.1.0",
@@ -52,7 +53,6 @@
     "@types/node": "^20.19.26",
     "@types/pg": "^8.15.6",
     "nodemon": "^3.0.2",
-    "pg": "^8.16.3",
     "prisma": "^7.1.0",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.8.16",
