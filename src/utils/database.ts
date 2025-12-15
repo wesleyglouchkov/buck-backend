@@ -7,7 +7,10 @@ const connectionString = `${process.env.DATABASE_URL}`;
 const connectionStringDev = `${process.env.DATABASE_URL_DEV}`;
 const isDevEnvironment = process.env.NODE_ENV === 'development';
 
-const pool = new Pool({ connectionString: isDevEnvironment ? connectionStringDev : connectionString });
+const pool = new Pool({
+  connectionString: isDevEnvironment ? connectionStringDev : connectionString,
+  ssl: isDevEnvironment ? undefined : { rejectUnauthorized: false }
+});
 const adapter = new PrismaPg(pool);
 
 
