@@ -217,26 +217,26 @@ export const createTipPayment = async (req: Request, res: Response) => {
 
 // Webhook to handle Stripe events
 export const stripeWebhook = async (req: Request, res: Response) => {
-    console.log("💫 Received webhook", req.headers);
+  console.log("💫 Received webhook", req.headers);
+
+  const signature = req.headers['stripe-signature'] as string;
+  if (!signature) return res.status(400).send('Missing stripe-signature');
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) return res.status(500).send('Webhook secret not configured');
+
+  let event: Stripe.Event;
   try {
-    const signature = req.headers['stripe-signature'];
+    // req.body is now the raw Buffer thanks to express.raw()
+    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    console.log("✅ Verified event:", event.type);
+  } catch (err: any) {
+    logger.error('Webhook signature verification failed', err);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
-    if (!signature) return res.status(400).send('Missing stripe-signature');
-    if (!STRIPE_WEBHOOK_SECRET) return res.status(500).send('Webhook secret not configured');
-    if (!Buffer.isBuffer((req as any).rawBody)) {
-      return res.status(400).send('Missing raw body buffer');
-    } 
-    if (!(req as any).rawBody) return res.status(400).send('Missing raw body');
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent((req as any).rawBody, signature as string, STRIPE_WEBHOOK_SECRET);
-      console.log("⚽️", event)
-    } catch (err: any) {
-      logger.error('Webhook signature verification failed', err);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
+  try {
     console.log(event.type, '<-----event.type')
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -290,7 +290,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
         break;
       }
       default:
-        break;
+        console.warn(`Unhandled event type: ${event.type}`);
     }
 
     res.json({ received: true });

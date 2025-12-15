@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-import bodyParser from 'body-parser'
+
 // Import routes
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
@@ -46,23 +46,19 @@ app.use(cors({
 
 // app.set("trust proxy", true)
 
-
-app.use(bodyParser.json({
-  verify: (req: any, res, buf) => {
-    req.rawBody = buf.toString();
+// Conditional body parsing: raw for webhook, JSON for everything else
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/stripe/webhook') {
+    next();
+  } else {
+    express.json({ limit: '100mb' })(req, res, next);
   }
-}));
-
-
-
-app.get('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res)=>{
-  return res.json({ success: true, message: 'Stripe webhook received' });
 });
 
+// Stripe webhook route with raw body parser
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
-// Body parsing middleware
-app.use(express.json({ limit: '100mb' }));
+// Body parsing middleware for URL-encoded data
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(cookieParser());
 
