@@ -55,6 +55,9 @@ app.use(bodyParser.json({
 
 
 
+app.get('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res)=>{
+  return res.json({ success: true, message: 'Stripe webhook received' });
+});
 
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
