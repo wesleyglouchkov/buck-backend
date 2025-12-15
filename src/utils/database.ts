@@ -9,10 +9,11 @@ const isDevEnvironment = process.env.NODE_ENV === 'development';
 
 const pool = new Pool({
   connectionString: isDevEnvironment ? connectionStringDev : connectionString,
+  // Fix for "self-signed certificate" error during TLS connection
   ssl: { rejectUnauthorized: false }
 });
-const adapter = new PrismaPg(pool);
 
+const adapter = new PrismaPg(pool);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
