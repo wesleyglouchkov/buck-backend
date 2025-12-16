@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { db } from '../utils/database';
 import { stripe, FRONTEND_URL, STRIPE_WEBHOOK_SECRET } from '../lib/stripe';
 import { configDotenv } from 'dotenv';
+import { hasOutstandingRequirements, isFullyActive, isOnboardingCompleted } from '../utils/stripeHelper';
 configDotenv()
 
 export const createConnectAccountLink = async (req: Request, res: Response) => {
@@ -14,11 +15,9 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     if (user.role !== 'CREATOR') return res.status(403).json({ success: false, message: 'User is not a creator' });
 
-    // Create or reuse existing Stripe account
     let accountId = user.stripe_account_id as string | undefined;
 
     if (!accountId) {
-      // ✅ Create new Express account with proper configuration
       const account = await stripe.accounts.create({
         type: 'express',
         email: user.email || undefined,
@@ -40,7 +39,6 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
 
       accountId = account.id;
 
-      // ✅ Persist account ID in database
       await db.user.update({
         where: { id: user.id },
         data: {
@@ -54,39 +52,44 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ Check if account needs onboarding or update
     const account = await stripe.accounts.retrieve(accountId);
 
-    // Determine the type of link needed
-    const linkType = !account.details_submitted ? 'account_onboarding' : 'account_update';
+    // ✅ Use helper functions
+    const fullyActive = isFullyActive(account);
+    const hasRequirements = hasOutstandingRequirements(account);
 
+    const linkType = fullyActive ? 'account_update' : 'account_onboarding';
     logger.info('Creating account link', {
       accountId,
       linkType,
       details_submitted: account.details_submitted,
       charges_enabled: account.charges_enabled,
       payouts_enabled: account.payouts_enabled,
+      isFullyActive: fullyActive,
+      hasOutstandingRequirements: hasRequirements,
+      currently_due: account.requirements?.currently_due || [],
+      eventually_due: account.requirements?.eventually_due || [],
     });
-
-    // ✅ Create account link with proper URLs
+    // ✅ Use helper for return URL
+    const returnUrl = hasRequirements
+      ? `${FRONTEND_URL}/creator/stripe/refresh`
+      : `${FRONTEND_URL}/creator/stripe/success`;
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${FRONTEND_URL}/creator/stripe/refresh`,
-      return_url: `${FRONTEND_URL}/creator/stripe/success`,
+      return_url: returnUrl,
       type: linkType,
-      // ✅ Collect all required information upfront
       collection_options: {
         fields: 'eventually_due',
       },
     });
-
     return res.json({
       success: true,
       url: accountLink.url,
       accountId,
       linkType,
+      hasOutstandingRequirements: hasRequirements,
     });
-
   } catch (error: any) {
     logger.error('createConnectAccountLink error', error);
     return res.status(500).json({
@@ -133,15 +136,9 @@ export const disconnectConnectAccount = async (req: Request, res: Response) => {
 export const getConnectStatus = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params as { userId: string };
-
     const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     const accountId = (user as any).stripe_account_id as string | undefined;
-
-    // ✅ Return early if no account exists
     if (!accountId) {
       return res.json({
         success: true,
@@ -149,36 +146,34 @@ export const getConnectStatus = async (req: Request, res: Response) => {
         chargesEnabled: false,
         payoutsEnabled: false,
         detailsSubmitted: false,
+        onboardingCompleted: false,
       });
     }
-
-    // ✅ Retrieve full account details from Stripe
     const account = await stripe.accounts.retrieve(accountId);
 
-    // ✅ Log detailed status for debugging
+    // ✅ Use helper functions
+    const hasRequirements = hasOutstandingRequirements(account);
+    const onboardingComplete = isOnboardingCompleted(account);
     logger.info('Stripe account status retrieved', {
       userId,
       accountId,
       details_submitted: account.details_submitted,
       charges_enabled: account.charges_enabled,
       payouts_enabled: account.payouts_enabled,
+      hasOutstandingRequirements: hasRequirements,
+      isOnboardingCompleted: onboardingComplete,
       currently_due: account.requirements?.currently_due || [],
       eventually_due: account.requirements?.eventually_due || [],
-      past_due: account.requirements?.past_due || [],
     });
-
-    // ✅ Update database with latest status from Stripe
+    // ✅ Update database
     await db.user.update({
       where: { id: userId },
       data: {
-        // @ts-ignore
         stripe_connected: account.charges_enabled || false,
-        // @ts-ignore
-        stripe_onboarding_completed: account.details_submitted || false,
+        stripe_onboarding_completed: onboardingComplete,
       },
     });
 
-    // ✅ Return comprehensive status
     return res.json({
       success: true,
       connected: account.charges_enabled || false,
@@ -186,7 +181,7 @@ export const getConnectStatus = async (req: Request, res: Response) => {
       chargesEnabled: account.charges_enabled || false,
       payoutsEnabled: account.payouts_enabled || false,
       detailsSubmitted: account.details_submitted || false,
-      // Include requirements for debugging
+      onboardingCompleted: onboardingComplete,
       requirements: {
         currently_due: account.requirements?.currently_due || [],
         eventually_due: account.requirements?.eventually_due || [],
@@ -420,7 +415,9 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       case 'account.updated': {
         const account = event.data.object as Stripe.Account;
         const accountId = account.id;
-
+        // ✅ Use helper functions
+        const hasRequirements = hasOutstandingRequirements(account);
+        const onboardingComplete = isOnboardingCompleted(account);
         logger.info('Stripe account.updated webhook received', {
           accountId,
           details_submitted: account.details_submitted,
@@ -428,36 +425,35 @@ export const stripeWebhook = async (req: Request, res: Response) => {
           payouts_enabled: account.payouts_enabled,
           currently_due: account.requirements?.currently_due || [],
           eventually_due: account.requirements?.eventually_due || [],
+          past_due: account.requirements?.past_due || [],
+          hasOutstandingRequirements: hasRequirements,
+          isOnboardingCompleted: onboardingComplete,
         });
-
         try {
-          // ✅ Update user with latest account status
           const result = await db.user.updateMany({
             where: { stripe_account_id: accountId },
             data: {
               // @ts-ignore
               stripe_connected: account.charges_enabled || false,
               // @ts-ignore
-              stripe_onboarding_completed: account.details_submitted || false,
+              stripe_onboarding_completed: onboardingComplete,
             },
           });
-
           logger.info('Successfully updated user from webhook', {
             accountId,
             usersUpdated: result.count,
             stripe_connected: account.charges_enabled,
-            stripe_onboarding_completed: account.details_submitted,
+            stripe_onboarding_completed: onboardingComplete,
           });
-
-          // ✅ Log if there are outstanding requirements
-          if (account.requirements?.currently_due && account.requirements.currently_due.length > 0) {
+          if (hasRequirements) {
             logger.warn('Account has outstanding requirements', {
               accountId,
-              currently_due: account.requirements.currently_due,
+              currently_due: account?.requirements?.currently_due,
+              eventually_due: account?.requirements?.eventually_due,
             });
           }
-
-        } catch (error) {
+        } 
+        catch (error) {
           logger.error('Failed to update user from account.updated webhook', {
             accountId,
             error,
