@@ -41,7 +41,6 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
           where: { id: user.id },
           data: {
             stripe_account_id: accountId,
-            stripe_connected: true,
           },
         });
       } catch (e) {
@@ -119,6 +118,69 @@ export const getConnectStatus = async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('getConnectStatus error', error);
     return res.status(500).json({ success: false, message: error.message || 'Failed to get status' });
+  }
+};
+
+export const checkAccountStatus = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId is required'
+      });
+    }
+
+    // Fetch user from database
+    const user = await db.user.findUnique({
+      where: { id: userId }
+    });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    if (!user.stripe_account_id) {
+      return res.status(404).json({
+        success: false,
+        message: 'No Stripe account found for this user'
+      });
+    }
+
+    // Fetch the latest account status directly from Stripe API
+    const account = await stripe.accounts.retrieve(user.stripe_account_id);
+
+
+    // Update the database with the latest status from Stripe
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        // @ts-ignore
+        stripe_connected: true,
+        // @ts-ignore
+        stripe_onboarding_completed: account.details_submitted || false,
+      },
+    });
+
+    // Return the status to frontend
+    return res.json({
+      success: true,
+      data: {
+        stripe_connected: true,
+        stripe_onboarding_completed: account.details_submitted || false,
+        charges_enabled: account.charges_enabled || false,
+        payouts_enabled: account.payouts_enabled || false,
+      },
+    });
+  } catch (error: any) {
+    logger.error('checkAccountStatus error', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to check Stripe account status'
+    });
   }
 };
 
@@ -274,19 +336,36 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       }
       case 'account.updated': {
         const account = event.data.object as Stripe.Account;
-        console.log(account.details_submitted, '<-------Details submitted')
         const accountId = account.id;
+
+        logger.info('Stripe account.updated webhook received', {
+          accountId,
+          details_submitted: account.details_submitted,
+          charges_enabled: account.charges_enabled,
+          payouts_enabled: account.payouts_enabled,
+        });
+
         try {
-          await db.user.updateMany({
+          const result = await db.user.updateMany({
             where: { stripe_account_id: accountId },
             data: {
               // @ts-ignore
               stripe_connected: true,
               // @ts-ignore
-              stripe_onboarding_completed: account.details_submitted,
+              stripe_onboarding_completed: account.details_submitted || false,
             },
           });
-        } catch { }
+
+          logger.info('Successfully updated user from webhook', {
+            accountId,
+            usersUpdated: result.count,
+          });
+        } catch (error) {
+          logger.error('Failed to update user from account.updated webhook', {
+            accountId,
+            error,
+          });
+        }
         break;
       }
       default:
