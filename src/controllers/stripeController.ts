@@ -21,13 +21,16 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
       // ✅ Create new Express account with proper configuration
       const account = await stripe.accounts.create({
         type: 'express',
-        // Don't hardcode country - let Stripe ask during onboarding for multi-country support
         email: user.email || undefined,
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
         },
         business_type: 'individual',
+        business_profile: {
+          product_description: 'BuckCreator',
+          mcc: '7997'
+        },
         metadata: {
           userId: user.id,
           userEmail: user.email || '',
