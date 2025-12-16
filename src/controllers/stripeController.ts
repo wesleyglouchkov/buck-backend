@@ -40,12 +40,11 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
 
       accountId = account.id;
 
-      // ✅ Persist account ID to database
+      // ✅ Persist account ID in database
       await db.user.update({
         where: { id: user.id },
         data: {
           stripe_account_id: accountId,
-          // Don't set stripe_connected here - webhook will handle it
         },
       });
 
@@ -76,7 +75,9 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
       return_url: `${FRONTEND_URL}/creator/stripe/success`,
       type: linkType,
       // ✅ Collect all required information upfront
-      collect: 'eventually_due',
+      collection_options: {
+        fields: 'eventually_due',
+      },
     });
 
     return res.json({
@@ -113,11 +114,8 @@ export const disconnectConnectAccount = async (req: Request, res: Response) => {
       await db.user.update({
         where: { id: user.id },
         data: {
-          // @ts-ignore
           stripe_account_id: null,
-          // @ts-ignore
           stripe_connected: false,
-          // @ts-ignore
           stripe_onboarding_completed: false,
         },
       });
