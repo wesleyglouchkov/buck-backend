@@ -71,9 +71,7 @@ export const createConnectAccountLink = async (req: Request, res: Response) => {
       eventually_due: account.requirements?.eventually_due || [],
     });
     // ✅ Use helper for return URL
-    const returnUrl = hasRequirements
-      ? `${FRONTEND_URL}/creator/stripe/refresh`
-      : `${FRONTEND_URL}/creator/stripe/success`;
+    const returnUrl = hasRequirements ? `${FRONTEND_URL}/creator/stripe/refresh` : `${FRONTEND_URL}/creator/stripe/success`;
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${FRONTEND_URL}/creator/stripe/refresh`,
