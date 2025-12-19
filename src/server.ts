@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { streamRoutes } from './routes/stream';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -94,9 +95,8 @@ app.use('/api/creator', creatorRoutes);
 // Member specific routes
 app.use('/api/member', memberRoutes);
 
-
-
-
+// Stream routes (Public/Member)
+app.use('/api/streams', streamRoutes);
 
 
 // 404 handler

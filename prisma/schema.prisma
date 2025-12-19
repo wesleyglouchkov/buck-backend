@@ -15,6 +15,7 @@ enum UserRole {
   MEMBER
 }
 
+
 model Admin {
   id        String   @id @default(cuid())
   name      String
@@ -117,6 +118,14 @@ model Stream {
   agoraChannelId String?  // For Agora ILS live streaming
   viewerCount    Int      @default(0)
 
+  // Cloud Recording
+  recordingId    String?
+  resourceId     String?
+  recordingSid   String?
+  
+  // Email tracking
+  reminderSent   Boolean  @default(false)
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -124,9 +133,8 @@ model Stream {
   creatorId      String
 
   chats          StreamChat[]
+  flaggedContent FlaggedContent[]
 
-  // Flagged content relation
-  flaggedContent    FlaggedContent[]
 
   @@map("streams")
 }

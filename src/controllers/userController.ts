@@ -3,14 +3,15 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../middleware/auth';
 import {
   getCreatorDashboardAnalytics,
-  getCreatorDashboardChartData,
-  getCreatorRecentStreams,
-  createStream,
-  updateStream,
-  deleteStream,
-  getStream,
+  createStream as createStreamService,
+  stopStream as stopStreamService,
+  changeLiveStatus as changeLiveStatusService,
+  updateStreamStreamService,
+  cancelStream as cancelStreamService,
+  getStreamService,
   updateCreatorProfile,
-  getCreatorProfile
+  getCreatorProfile,
+  getScheduledStreams as getScheduledStreamsService
 } from '../services/creatorService';
 import {
   getMemberDashboardData,
@@ -81,6 +82,8 @@ export const sendHelpRequestAsEmailToAdmin = asyncHandler(async (req: Authentica
 });
 
 // ============================Creator Controllers ===============
+
+/*==========Creator Dashboard==========*/
 export const getCreatorDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const creatorId = req.user!.id;
   const analytics = await getCreatorDashboardAnalytics(creatorId);
@@ -88,8 +91,66 @@ export const getCreatorDashboard = asyncHandler(async (req: AuthenticatedRequest
 });
 
 
+/*==========Streams Live================*/
+export const createStream = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const creatorId = req.user!.id;
+  const result = await createStreamService(creatorId, req.body);
+  res.status(201).json({ success: true, ...result });
+});
 
-// ============================Member Controllers ===============
+export const stopStream = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { streamId } = req.params;
+  const { replayUrl } = req.body;
+  const creatorId = req.user!.id;
+  const result = await stopStreamService(streamId, creatorId, replayUrl);
+  res.json({ success: true, ...result });
+});
+
+export const changeLiveStatus = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { streamId } = req.params;
+  const { isLive } = req.body;
+  const creatorId = req.user!.id;
+  const result = await changeLiveStatusService(streamId, creatorId, isLive);
+  res.json({ success: true, ...result });
+});
+
+
+/*============================ Scheduled Streams ==========*/
+export const getScheduledStreams = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { creatorId } = req.params;
+  const { startDate, endDate } = req.query;
+  const streams = await getScheduledStreamsService(creatorId, startDate as string, endDate as string);
+  res.status(200).json({ success: true, streams });
+});
+
+export const getStream = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { streamId } = req.params;
+  const stream = await getStreamService(streamId);
+  res.status(200).json({ success: true, stream });
+});
+
+export const cancelStream = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { streamId } = req.params;
+  const creatorId = req.user!.id;
+  const result = await cancelStreamService(streamId, creatorId);
+  res.json({ success: true, ...result });
+});
+
+export const updateStream = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { streamId } = req.params;
+  const creatorId = req.user!.id;
+  const { title, startTime, workoutType, description, thumbnail } = req.body;
+  const result = await updateStreamStreamService(streamId, creatorId, { title, startTime, workoutType, description, thumbnail });
+  res.json({ success: true, ...result });
+});
+
+// /**--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+
+
+
+
+                                    //  ============================ Member Controllers ===============
 export const getMemberDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const memberId = req.user!.id;
   const data = await getMemberDashboardData(memberId);

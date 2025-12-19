@@ -1,10 +1,10 @@
-
 import { Resend } from 'resend';
 import { ResetPasswordEmail } from '../emails/ResetPasswordEmail';
 import { AccountWarningEmail } from '../emails/AccountWarningEmail';
 import { AccountSuspensionEmail } from '../emails/AccountSuspensionEmail';
 import { WelcomeEmail } from '../emails/WelcomeEmail';
 import { HelpRequestEmail } from '../emails/HelpRequestEmail';
+import { StreamNotificationEmail } from '../emails/StreamNotificationEmail';
 import React from 'react';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -140,5 +140,66 @@ export const sendHelpRequestEmail = async (data: {
     } catch (error) {
         console.error('Error sending help request email:', error);
         throw error;
+    }
+};
+
+export const sendStreamNotification = async (recipientEmail: string, recipientName: string,
+    streamData: {
+        type: 'live_now' | 'scheduled' | 'reminder' | 'cancelled' | 'updated';
+        creatorName: string;
+        streamTitle: string;
+        workoutType?: string;
+        streamId: string;
+        startTime?: Date;
+        timezone?: string;
+    }
+) => {
+    if (!process.env.RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is missing');
+        return;
+    }
+
+    const { type, creatorName } = streamData;
+    let subject = '';
+
+    switch (type) {
+        case 'live_now':
+            subject = `🔴 ${creatorName} is LIVE NOW!`;
+            break;
+        case 'scheduled':
+            subject = `📅 ${creatorName} scheduled a live stream`;
+            break;
+        case 'reminder':
+            subject = `⏰ ${creatorName} goes live in 15 minutes!`;
+            break;
+        case 'cancelled':
+            subject = `❌ Stream Cancelled: ${streamData.streamTitle}`;
+            break;
+        case 'updated':
+            subject = `🔄 Stream Updated: ${streamData.streamTitle}`;
+            break;
+    }
+
+    try {
+        const data = await resend.emails.send({
+            from: 'Buck <onboarding@resend.dev>',
+            to: recipientEmail,
+            subject: subject,
+            react: React.createElement(StreamNotificationEmail, {
+                type: streamData.type,
+                memberName: recipientName,
+                creatorName: streamData.creatorName,
+                streamTitle: streamData.streamTitle,
+                workoutType: streamData.workoutType,
+                streamId: streamData.streamId,
+                startTime: streamData.startTime,
+                timezone: streamData.timezone || 'UTC'
+            }),
+        });
+
+        return data;
+    } catch (error) {
+        console.error(`Error sending stream notification (${type}) to ${recipientEmail}:`, error);
+        return null;
     }
 };
