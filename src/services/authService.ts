@@ -31,6 +31,7 @@ export const loginUser = async (data: LoginInput) => {
       username: user.username,
       name: user.name,
       role: user.role,
+      ...('avatar' in user && user.avatar ? { avatar: user.avatar } : {}),
     },
   };
 };
@@ -72,6 +73,7 @@ export const signupUser = async ( data: SignupInput) => {
       username: user.username,
       name: user.name,
       role: user.role,
+      ...('avatar' in user && user.avatar ? { avatar: user.avatar } : {}),
     },
   };
 };
