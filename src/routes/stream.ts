@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { getAgoraToken } from '../controllers/streamController';
 import { authenticate } from '../middleware/auth';
+import { getStream } from '../controllers/userController';
 
 const router = Router();
 
@@ -11,5 +12,7 @@ const router = Router();
 // Frontend should pass ?userId=...&role=...
 // Typically members are subscribers
 router.get('/:streamId/token', getAgoraToken);
+router.get('/:streamId', getStream); 
+
 
 export const streamRoutes = router;
