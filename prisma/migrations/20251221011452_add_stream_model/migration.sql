@@ -27,15 +27,15 @@ END $$;
 DELETE FROM "subscriptions";
 
 -- AlterTable
-ALTER TABLE "subscriptions" ADD COLUMN     "creatorId" TEXT NOT NULL,
-ADD COLUMN     "endDate" TIMESTAMP(3),
-ADD COLUMN     "fee" DECIMAL(10,2) NOT NULL,
-ADD COLUMN     "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'active',
-ADD COLUMN     "stripeSubscriptionId" TEXT;
+ALTER TABLE "subscriptions" ADD COLUMN IF NOT EXISTS "creatorId" TEXT NOT NULL,
+ADD COLUMN IF NOT EXISTS "endDate" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "fee" DECIMAL(10,2) NOT NULL,
+ADD COLUMN IF NOT EXISTS "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'active',
+ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" TEXT;
 
 -- AlterTable
-ALTER TABLE "users" ADD COLUMN     "subscriptionPrice" DECIMAL(10,2);
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "subscriptionPrice" DECIMAL(10,2);
 
 -- DropTable
 DROP TABLE IF EXISTS "analytics";
@@ -44,7 +44,7 @@ DROP TABLE IF EXISTS "analytics";
 DROP TABLE IF EXISTS "content";
 
 -- CreateTable
-CREATE TABLE "follows" (
+CREATE TABLE IF NOT EXISTS "follows" (
     "id" TEXT NOT NULL,
     "followerId" TEXT NOT NULL,
     "followedId" TEXT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE "follows" (
 );
 
 -- CreateTable
-CREATE TABLE "streams" (
+CREATE TABLE IF NOT EXISTS "streams" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
@@ -78,7 +78,7 @@ CREATE TABLE "streams" (
 );
 
 -- CreateTable
-CREATE TABLE "stream_chats" (
+CREATE TABLE IF NOT EXISTS "stream_chats" (
     "id" TEXT NOT NULL,
     "streamId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -90,7 +90,7 @@ CREATE TABLE "stream_chats" (
 );
 
 -- CreateTable
-CREATE TABLE "flagged_content" (
+CREATE TABLE IF NOT EXISTS "flagged_content" (
     "id" TEXT NOT NULL,
     "senderId" TEXT NOT NULL,
     "flaggedMsgId" TEXT,
@@ -103,37 +103,77 @@ CREATE TABLE "flagged_content" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "follows_followerId_followedId_key" ON "follows"("followerId", "followedId");
+CREATE UNIQUE INDEX IF NOT EXISTS "follows_followerId_followedId_key" ON "follows"("followerId", "followedId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "subscriptions_creatorId_memberId_key" ON "subscriptions"("creatorId", "memberId");
+CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_creatorId_memberId_key" ON "subscriptions"("creatorId", "memberId");
 
 -- AddForeignKey
-ALTER TABLE "follows" ADD CONSTRAINT "follows_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'follows_followerId_fkey') THEN
+        ALTER TABLE "follows" ADD CONSTRAINT "follows_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "follows" ADD CONSTRAINT "follows_followedId_fkey" FOREIGN KEY ("followedId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'follows_followedId_fkey') THEN
+        ALTER TABLE "follows" ADD CONSTRAINT "follows_followedId_fkey" FOREIGN KEY ("followedId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'subscriptions_creatorId_fkey') THEN
+        ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "streams" ADD CONSTRAINT "streams_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'streams_creatorId_fkey') THEN
+        ALTER TABLE "streams" ADD CONSTRAINT "streams_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "stream_chats" ADD CONSTRAINT "stream_chats_streamId_fkey" FOREIGN KEY ("streamId") REFERENCES "streams"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'stream_chats_streamId_fkey') THEN
+        ALTER TABLE "stream_chats" ADD CONSTRAINT "stream_chats_streamId_fkey" FOREIGN KEY ("streamId") REFERENCES "streams"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "stream_chats" ADD CONSTRAINT "stream_chats_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'stream_chats_userId_fkey') THEN
+        ALTER TABLE "stream_chats" ADD CONSTRAINT "stream_chats_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'flagged_content_senderId_fkey') THEN
+        ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'flagged_content_reporterId_fkey') THEN
+        ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_flaggedMsgId_fkey" FOREIGN KEY ("flaggedMsgId") REFERENCES "stream_chats"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'flagged_content_flaggedMsgId_fkey') THEN
+        ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_flaggedMsgId_fkey" FOREIGN KEY ("flaggedMsgId") REFERENCES "stream_chats"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_livestreamId_fkey" FOREIGN KEY ("livestreamId") REFERENCES "streams"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'flagged_content_livestreamId_fkey') THEN
+        ALTER TABLE "flagged_content" ADD CONSTRAINT "flagged_content_livestreamId_fkey" FOREIGN KEY ("livestreamId") REFERENCES "streams"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
