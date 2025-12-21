@@ -77,6 +77,13 @@ CREATE TABLE IF NOT EXISTS "streams" (
     CONSTRAINT "streams_pkey" PRIMARY KEY ("id")
 );
 
+-- Ensure columns exist if table was partially created
+ALTER TABLE "streams" 
+ADD COLUMN IF NOT EXISTS "recordingId" TEXT,
+ADD COLUMN IF NOT EXISTS "resourceId" TEXT,
+ADD COLUMN IF NOT EXISTS "recordingSid" TEXT,
+ADD COLUMN IF NOT EXISTS "reminderSent" BOOLEAN NOT NULL DEFAULT false;
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "stream_chats" (
     "id" TEXT NOT NULL,
