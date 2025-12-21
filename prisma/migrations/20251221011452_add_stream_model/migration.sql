@@ -9,10 +9,19 @@
 
 */
 -- DropForeignKey
-ALTER TABLE "analytics" DROP CONSTRAINT "analytics_creatorId_fkey";
+-- DropForeignKey if exists
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'analytics_creatorId_fkey') THEN
+        ALTER TABLE "analytics" DROP CONSTRAINT "analytics_creatorId_fkey";
+    END IF;
+END $$;
 
--- DropForeignKey
-ALTER TABLE "content" DROP CONSTRAINT "content_creatorId_fkey";
+-- DropForeignKey if exists
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'content_creatorId_fkey') THEN
+        ALTER TABLE "content" DROP CONSTRAINT "content_creatorId_fkey";
+    END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "subscriptions" ADD COLUMN     "creatorId" TEXT NOT NULL,
@@ -26,10 +35,10 @@ ADD COLUMN     "stripeSubscriptionId" TEXT;
 ALTER TABLE "users" ADD COLUMN     "subscriptionPrice" DECIMAL(10,2);
 
 -- DropTable
-DROP TABLE "analytics";
+DROP TABLE IF EXISTS "analytics";
 
 -- DropTable
-DROP TABLE "content";
+DROP TABLE IF EXISTS "content";
 
 -- CreateTable
 CREATE TABLE "follows" (
