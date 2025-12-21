@@ -23,6 +23,9 @@ DO $$ BEGIN
     END IF;
 END $$;
 
+-- Clean up potentially incompatible data from subscriptions table
+DELETE FROM "subscriptions";
+
 -- AlterTable
 ALTER TABLE "subscriptions" ADD COLUMN     "creatorId" TEXT NOT NULL,
 ADD COLUMN     "endDate" TIMESTAMP(3),
