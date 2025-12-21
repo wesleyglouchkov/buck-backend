@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,13 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
-enum UserRole {
-  ADMIN
-  CREATOR
-  MEMBER
-}
-
 
 model Admin {
   id        String   @id @default(cuid())
@@ -25,133 +15,106 @@ model Admin {
   role      UserRole @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("admins")
 }
 
 model User {
-  id                          String    @id @default(cuid())
+  id                          String           @id @default(cuid())
   name                        String
-  username                    String    @unique
-  email                       String    @unique
+  username                    String           @unique
+  email                       String           @unique
   password                    String
   role                        UserRole
   bio                         String?
   avatar                      String?
-  isActive                    Boolean   @default(true)
-  isWarnedTimes               Int       @default(0)
-  createdAt                   DateTime  @default(now())
-  updatedAt                   DateTime  @updatedAt
-
-  // Creator-specific field – the monthly subscription price set by the creator
-  // Null for non-creators (MEMBER or ADMIN)
-  subscriptionPrice           Decimal?  @db.Decimal(10, 2)
-
-  // Relations
-  createdStreams              Stream[]
-  followers                   Follow[]   @relation("Followed")      // For Creator: Members following this creator
-  following                   Follow[]   @relation("Follower")      // For Members: Creators this member follows
-  subscribers                 Subscription[] @relation("CreatorSubscriptions") // Active subscribers to this creator
-  subscriptions               Subscription[] @relation("MemberSubscriptions") // Creators this member subscribes to
-
-  // Stripe
+  isActive                    Boolean          @default(true)
+  isWarnedTimes               Int              @default(0)
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
   stripe_account_id           String?
-  stripe_connected            Boolean   @default(false)
-  stripe_onboarding_completed Boolean   @default(false)
-
-  // Tips
+  stripe_connected            Boolean          @default(false)
+  stripe_onboarding_completed Boolean          @default(false)
+  subscriptionPrice           Decimal?         @db.Decimal(10, 2)
+  flaggedAsReporter           FlaggedContent[] @relation("FlaggedContentReporter")
+  flaggedAsSender             FlaggedContent[] @relation("FlaggedContentSender")
+  followers                   Follow[]         @relation("Followed")
+  following                   Follow[]         @relation("Follower")
+  streamChats                 StreamChat[]
+  createdStreams              Stream[]
+  subscribers                 Subscription[]   @relation("CreatorSubscriptions")
+  subscriptions               Subscription[]   @relation("MemberSubscriptions")
   tipCreatorTransactions      TipTransaction[] @relation("TipCreator")
   tipMemberTransactions       TipTransaction[] @relation("TipMember")
-
-  // Chat
-  streamChats                 StreamChat[]
-
-  // Flagged content relations
-  flaggedAsSender   FlaggedContent[] @relation("FlaggedContentSender")
-  flaggedAsReporter FlaggedContent[] @relation("FlaggedContentReporter")
 
   @@map("users")
 }
 
 model Follow {
   id         String   @id @default(cuid())
-  followerId String   // Member who follows
-  followedId String   // Creator being followed
+  followerId String
+  followedId String
   createdAt  DateTime @default(now())
-
-  follower   User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
   followed   User     @relation("Followed", fields: [followedId], references: [id], onDelete: Cascade)
+  follower   User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followedId])
   @@map("follows")
 }
 
 model Subscription {
-  id                  String   @id @default(cuid())
-  creatorId           String
-  memberId            String
-  fee                 Decimal  @db.Decimal(10, 2) // Snapshot of the creator's subscriptionPrice at time of subscription
-  status              String   @default("active") // active, cancelled, past_due, etc.
-  startDate           DateTime @default(now())
-  endDate             DateTime?
+  id                   String    @id @default(cuid())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  memberId             String
+  creatorId            String
+  endDate              DateTime?
+  fee                  Decimal   @db.Decimal(10, 2)
+  startDate            DateTime  @default(now())
+  status               String    @default("active")
   stripeSubscriptionId String?
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  creator             User     @relation("CreatorSubscriptions", fields: [creatorId], references: [id], onDelete: Cascade)
-  member              User     @relation("MemberSubscriptions", fields: [memberId], references: [id], onDelete: Cascade)
+  creator              User      @relation("CreatorSubscriptions", fields: [creatorId], references: [id], onDelete: Cascade)
+  member               User      @relation("MemberSubscriptions", fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([creatorId, memberId])
   @@map("subscriptions")
 }
 
 model Stream {
-  id             String   @id @default(cuid())
+  id             String           @id @default(cuid())
   title          String
   description    String?
-  workoutType    String?  // e.g., Strength, HIIT, Mobility
+  workoutType    String?
   thumbnail      String?
   startTime      DateTime
   endTime        DateTime?
-  isLive         Boolean  @default(false)
-  replayUrl      String?  // S3 HLS URL for replay (Vidstack playback)
-  agoraChannelId String?  // For Agora ILS live streaming
-  viewerCount    Int      @default(0)
-
-  // Cloud Recording
+  isLive         Boolean          @default(false)
+  replayUrl      String?
+  viewerCount    Int              @default(0)
   recordingId    String?
   resourceId     String?
   recordingSid   String?
-  
-  // Email tracking
-  reminderSent   Boolean  @default(false)
-
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  creator        User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  reminderSent   Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   creatorId      String
-
-  chats          StreamChat[]
   flaggedContent FlaggedContent[]
-
+  chats          StreamChat[]
+  creator        User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@map("streams")
 }
 
 model StreamChat {
-  id        String   @id @default(cuid())
-  streamId  String
-  userId    String   // Creator or Member
-  message   String
-  timestamp DateTime @default(now())
-  isRemoved Boolean  @default(false) // For moderation
-
-  stream    Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Flagged content relation
-  flaggedContent    FlaggedContent[]
+  id             String           @id @default(cuid())
+  streamId       String
+  userId         String
+  message        String
+  timestamp      DateTime         @default(now())
+  isRemoved      Boolean          @default(false)
+  flaggedContent FlaggedContent[]
+  stream         Stream           @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("stream_chats")
 }
@@ -167,41 +130,44 @@ model PasswordResetToken {
 }
 
 model TipTransaction {
-  id                     String    @id @default(cuid())
-  session_id             String    @unique
-  creator_id             String
-  member_id              String
-  livestream_id          String?
-  buck_amount            Decimal   @db.Decimal(10, 2)
-  amount_cents           Int
-  platform_fee_cents     Int
-  creator_receives_cents Int
-  status                 String    @default("pending")
+  id                       String    @id @default(cuid())
+  session_id               String    @unique
+  creator_id               String
+  member_id                String
+  livestream_id            String?
+  buck_amount              Decimal   @db.Decimal(10, 2)
+  amount_cents             Int
+  platform_fee_cents       Int
+  creator_receives_cents   Int
+  status                   String    @default("pending")
   stripe_payment_intent_id String?
-  created_at             DateTime  @default(now())
-  completed_at           DateTime?
-  metadata               Json?
-
-  creator                User      @relation("TipCreator", fields: [creator_id], references: [id], onDelete: Cascade)
-  member                 User      @relation("TipMember", fields: [member_id], references: [id], onDelete: Cascade)
+  created_at               DateTime  @default(now())
+  completed_at             DateTime?
+  metadata                 Json?
+  creator                  User      @relation("TipCreator", fields: [creator_id], references: [id], onDelete: Cascade)
+  member                   User      @relation("TipMember", fields: [member_id], references: [id], onDelete: Cascade)
 
   @@map("tip_transactions")
 }
 
 model FlaggedContent {
-  id               String      @id @default(cuid())
-  senderId         String
-  flaggedMsgId     String?     // Nullable: if a specific message is flagged
-  reporterId       String
-  reporterComment  String?     // Changed to optional
-  livestreamId     String?     // Nullable: if a stream is flagged
-  createdAt        DateTime    @default(now())
-
-  // Relations
-  sender           User        @relation("FlaggedContentSender", fields: [senderId], references: [id], onDelete: Cascade)
-  reporter         User        @relation("FlaggedContentReporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  flaggedMsg       StreamChat? @relation(fields: [flaggedMsgId], references: [id])
-  livestream       Stream?     @relation(fields: [livestreamId], references: [id])
+  id              String      @id @default(cuid())
+  senderId        String
+  flaggedMsgId    String?
+  reporterId      String
+  reporterComment String?
+  livestreamId    String?
+  createdAt       DateTime    @default(now())
+  flaggedMsg      StreamChat? @relation(fields: [flaggedMsgId], references: [id])
+  livestream      Stream?     @relation(fields: [livestreamId], references: [id])
+  reporter        User        @relation("FlaggedContentReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  sender          User        @relation("FlaggedContentSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@map("flagged_content")
+}
+
+enum UserRole {
+  ADMIN
+  CREATOR
+  MEMBER
 }

@@ -37,7 +37,14 @@ export const verifyToken = async (token: string) => {
   if (!decoded) {
     throw new Error('Invalid token');
   }
-  return { user: decoded } as unknown as JWTPayload;
+
+  // Normalize NextAuth token to our UserPayload
+  const user = {
+    ...decoded,
+    id: (decoded.id || decoded.sub) as string,
+  };
+
+  return { user } as unknown as JWTPayload;
 };
 
 export const generateToken = async (email: string) => {

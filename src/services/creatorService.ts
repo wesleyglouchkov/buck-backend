@@ -90,6 +90,15 @@ export const getCreatorRecentStreams = async (creatorId: string) => {
 export const createStream = async (creatorId: string, data: { title: string; description?: string; workoutType?: string; thumbnail?: string; startTime: string | Date; isScheduled: boolean; timezone?: string }) => {
   const { title, description, workoutType, thumbnail, startTime, isScheduled, timezone } = data;
 
+  // 0. Verify creator exists (to prevent foreign key constraint issues)
+  const creatorExists = await db.user.findUnique({
+    where: { id: creatorId, role: 'CREATOR' }
+  });
+
+  if (!creatorExists) {
+    throw new Error(`Invalid creator ID: ${creatorId}. User does not exist or is not a creator. Please try logging out and back in.`);
+  }
+
   // 1. Create stream record
   const stream = await db.stream.create({
     data: {
@@ -100,19 +109,11 @@ export const createStream = async (creatorId: string, data: { title: string; des
       startTime: new Date(startTime),
       isLive: !isScheduled, // Start immediately if not scheduled
       creatorId,
-      agoraChannelId: '', // Will update with ID
     },
   });
 
-  // 2. Generate Agora Channel ID & Token
-  const agoraChannelId = stream.id;
-  const agoraToken = generateAgoraToken(agoraChannelId, 0, 'publisher');
-
-  // Update stream with channel ID
-  const updatedStream = await db.stream.update({
-    where: { id: stream.id },
-    data: { agoraChannelId },
-  });
+  // 2. Generate Agora Token (Channel ID is the stream ID)
+  const agoraToken = generateAgoraToken(stream.id, 0, 'publisher');
 
   // 3. Notifications
   const followers = await db.follow.findMany({
@@ -163,13 +164,12 @@ export const createStream = async (creatorId: string, data: { title: string; des
 
   return {
     stream: {
-      id: updatedStream.id,
-      title: updatedStream.title,
-      agoraChannelId: updatedStream.agoraChannelId,
+      id: stream.id,
+      title: stream.title,
       agoraToken,
       agoraUid: 0,
-      startTime: updatedStream.startTime,
-      isLive: updatedStream.isLive,
+      startTime: stream.startTime,
+      isLive: stream.isLive,
     },
     message: isScheduled ? 'Stream scheduled successfully' : 'Stream started successfully',
   };

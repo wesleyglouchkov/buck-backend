@@ -31,6 +31,11 @@ export const authenticate = async (
       const decoded = await verifyToken(token);
       // @ts-ignore
       req.user = decoded.user;
+
+      if (process.env.NODE_ENV === 'development') {
+        logger.info(`Authenticated user: ${req.user.email} (id: ${req.user.id}, role: ${req.user.role})`);
+      }
+
       next();
     } catch (error) {
       logger.error('Invalid token:', error);
