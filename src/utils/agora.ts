@@ -1,8 +1,11 @@
+import { RtcTokenBuilder, RtmTokenBuilder, RtcRole } from 'agora-token';
 
-import { RtcTokenBuilder, RtcRole } from 'agora-token';
+export interface AgoraTokens {
+    rtcToken: string;
+    rtmToken: string;
+}
 
-export function generateAgoraToken(channelName: string, uid: number, role: 'publisher' | 'subscriber'): string {
-
+export function generateAgoraTokens(channelName: string, uid: number, role: 'publisher' | 'subscriber'): AgoraTokens {
     const appId = process.env.AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
 
@@ -10,18 +13,30 @@ export function generateAgoraToken(channelName: string, uid: number, role: 'publ
         throw new Error('AGORA_APP_ID or AGORA_APP_CERTIFICATE is missing in environment variables');
     }
 
-    const roleNum = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
-    const expirationTimeInSeconds = 7200; // 2 hours
+    const expirationInSeconds = 7200;
     const currentTimestamp = Math.floor(Date.now() / 1000);
-    const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+    const privilegeExpiredTs = currentTimestamp + expirationInSeconds;
+    
+    const rtcRole = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
 
-    return RtcTokenBuilder.buildTokenWithUid(
+    // Generate RTC token for video/audio streaming
+    const rtcToken = RtcTokenBuilder.buildTokenWithUid(
         appId,
         appCertificate,
         channelName,
         uid,
-        roleNum,
-        expirationTimeInSeconds,
+        rtcRole,
+        expirationInSeconds,   // Token expiration
+        expirationInSeconds    // Privilege expiration
+    );
+
+    // Generate RTM token for signaling (uses string UID)
+    const rtmToken = RtmTokenBuilder.buildToken(
+        appId,
+        appCertificate,
+        uid.toString(),        // RTM uses string user ID
         privilegeExpiredTs
     );
+
+    return { rtcToken, rtmToken };
 }

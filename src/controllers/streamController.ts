@@ -1,31 +1,32 @@
 
 import { Request, Response } from 'express';
 import { db } from '../utils/database';
-import { generateAgoraToken } from '../utils/agora';
+import { generateAgoraTokens } from '../utils/agora';
 
 // --- Get Agora Token ---
 export const getAgoraToken = async (req: Request, res: Response) => {
     try {
         const { streamId } = req.params;
-        const { userId, role } = req.query; // 'publisher' | 'subscriber'
+        const { userId, role } = req.query;
 
         const stream = await db.stream.findUnique({ where: { id: streamId } });
         if (!stream) {
             return res.status(404).json({ success: false, message: 'Stream not found' });
         }
 
-        // Determine UID: Use hashing since Agora UIDs must be Int (32-bit uint)
-        // Or simpler: generate a random one if it's a viewer
-        // Ideally we persist this mapping or the frontend passes a numeric ID they manage
-        // For now, let's use a simple hash of the userId or just 0 if frontend doesn't strictly need persistent UIDs
-
-        // Better: hash the UUID to a 32-bit int
         const uid = userId ? hashCode(userId as string) : 0;
-        const token = generateAgoraToken(stream.id, uid, (role as 'publisher' | 'subscriber') || 'subscriber');
+        
+        // Generate both tokens
+        const { rtcToken, rtmToken } = generateAgoraTokens(
+            stream.id, 
+            uid, 
+            (role as 'publisher' | 'subscriber') || 'subscriber'
+        );
 
         return res.json({
             success: true,
-            token,
+            token: rtcToken,      // RTC token for video/audio
+            rtmToken: rtmToken,   // RTM token for signaling/messaging
             uid,
             channelId: stream.id,
             appId: process.env.AGORA_APP_ID,
