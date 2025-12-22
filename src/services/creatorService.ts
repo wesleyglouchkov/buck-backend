@@ -1,6 +1,6 @@
 import { db } from '../utils/database';
 import { UpdateProfileInput } from '../utils/validation';
-import { generateAgoraToken } from '../utils/agora';
+import { generateAgoraRtcToken, generateAgoraRtmToken } from '../utils/agora';
 import { sendStreamNotification } from './emailService';
 
 export const getCreatorDashboardAnalytics = async (creatorId: string) => {
@@ -113,7 +113,8 @@ export const createStream = async (creatorId: string, data: { title: string; des
   });
 
   // 2. Generate Agora Token (Channel ID is the stream ID)
-  const agoraToken = generateAgoraToken(stream.id, 0, 'publisher');
+  const agoraToken = generateAgoraRtcToken(stream.id, 0, 'publisher');
+  const agoraRtmToken = generateAgoraRtmToken(creatorId);
 
   // 3. Notifications
   const followers = await db.follow.findMany({
@@ -168,6 +169,7 @@ export const createStream = async (creatorId: string, data: { title: string; des
       title: stream.title,
       agoraToken,
       agoraUid: 0,
+      agoraRtmToken,
       startTime: stream.startTime,
       isLive: stream.isLive,
     },
