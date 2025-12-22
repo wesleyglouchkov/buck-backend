@@ -1,7 +1,7 @@
 
 import { Request, Response } from 'express';
 import { db } from '../utils/database';
-import { generateAgoraToken } from '../utils/agora';
+import { generateAgoraRtcToken, generateAgoraRtmToken } from '../utils/agora';
 
 // --- Get Agora Token ---
 export const getAgoraToken = async (req: Request, res: Response) => {
@@ -21,11 +21,13 @@ export const getAgoraToken = async (req: Request, res: Response) => {
 
         // Better: hash the UUID to a 32-bit int
         const uid = userId ? hashCode(userId as string) : 0;
-        const token = generateAgoraToken(stream.id, uid, (role as 'publisher' | 'subscriber') || 'subscriber');
+        const token = generateAgoraRtcToken(stream.id, uid, (role as 'publisher' | 'subscriber') || 'subscriber');
+        const rtmToken = generateAgoraRtmToken(uid);
 
         return res.json({
             success: true,
             token,
+            rtmToken,
             uid,
             channelId: stream.id,
             appId: process.env.AGORA_APP_ID,
