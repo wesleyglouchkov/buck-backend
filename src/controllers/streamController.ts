@@ -13,7 +13,7 @@ export const getAgoraToken = async (req: Request, res: Response) => {
         if (!stream) {
             return res.status(404).json({ success: false, message: 'Stream not found' });
         }
-
+        const user = await db.user.findUnique({ where: { id: userId as string } })
         // Determine UID: Use hashing since Agora UIDs must be Int (32-bit uint)
         // Or simpler: generate a random one if it's a viewer
         // Ideally we persist this mapping or the frontend passes a numeric ID they manage
@@ -31,7 +31,9 @@ export const getAgoraToken = async (req: Request, res: Response) => {
             uid,
             channelId: stream.id,
             appId: process.env.AGORA_APP_ID,
-            stream
+            stream,
+            userName: user?.name,
+            userAvatar: user?.avatar    
         });
 
     } catch (error: any) {
